@@ -95,7 +95,7 @@ class ObjectCharacteristics(PremisBaseModel, tag="objectCharacteristics", frozen
     # object_characteristics_extension: ...
 
 
-class OriginalName(PremisBaseModel, tag="orignalName", frozen=True):
+class OriginalName(PremisBaseModel, tag="originalName", frozen=True):
     value: str
     simple_link: str | None = attr(name="simpleLink", default=None)
 
