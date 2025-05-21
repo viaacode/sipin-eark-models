@@ -1,0 +1,145 @@
+pipeline {
+    agent {
+        label 'node'
+    }
+    options {
+        timeout(time: 45, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+    environment {
+        OC_PROJECT = 'python-libraries'
+        OC_URL = 'https://c113-e.private.eu-de.containers.cloud.ibm.com:30227'
+        JIRA_URL = 'meemoo.atlassian.net'
+        APP_NAME = 'eark_models'
+        BASE_IMAGE = 'python:3.12-bookworm'
+    }
+
+    stages {
+        stage('Calculate extra ENV vars') {
+            steps {
+                script {
+                    env.GIT_SHORT_COMMIT = sh(script: "printf \$(git rev-parse --short ${GIT_COMMIT})", returnStdout: true)
+                    env.GIT_TAG = sh(script: 'git describe --tags --abbrev=0 || echo 0.0.1', returnStdout: true)
+                    env.PACKAGE_VERSION = sh(script: 'echo $GIT_TAG | sed "s/^v//" | tr -d "\\n"', returnStdout: true)
+                }
+            }
+        }
+        stage('Check formatting & lint Python code') {
+            when {
+                anyOf {
+                    changeRequest target: 'main'
+                    branch 'main'
+                    buildingTag()
+                }
+            }
+            steps {
+                script {
+                    docker.image("${BASE_IMAGE}").inside {
+                        sh """#!/bin/bash
+                        set -e
+                        pip3 install ".[test]"
+                        black --check eark_models/ tests/
+                        flake8 --extend-ignore E tests/ eark_models/
+                        """
+                    }
+                }
+            }
+        }
+        stage('Run tests') {
+            when {
+                anyOf {
+                    changeRequest target: 'main'
+                    branch 'main'
+                    buildingTag()
+                }
+            }
+            steps {
+                script {
+                    docker.image("${BASE_IMAGE}").inside {
+                        sh """#!/bin/bash
+                        pip3 install ".[test]"
+                        pytest --junitxml tests/test_results.xml
+                        """
+                    }
+                }
+            }
+        }
+        stage('Build Python package') {
+            when {
+                anyOf {
+                    branch 'main'
+                    buildingTag()
+                }
+            }
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
+                        // Since the version in pyproject is static, we tweak it here
+                        docker.image("${BASE_IMAGE}").inside {
+                            sh "sed -i 's/^version = .*/version = \"$PACKAGE_VERSION\"/' pyproject.toml"
+                            sh """#!/bin/bash
+                            pip3 install --upgrade build
+                            python -m build
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        stage("Publish Python package") {
+            when {
+                buildingTag()
+            }
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
+                        docker.image("${BASE_IMAGE}").inside {
+                            sh """#!/bin/bash
+                            pip3 install --upgrade twine
+                            twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u $NEXUS_USERNAME -p $NEXUS_PASSWORD --non-interactive
+                            """
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script {
+                if (env.BRANCH_NAME.startsWith('PR')) {
+                    setGitHubBuildStatus('Build', 'SUCCESS')
+                }
+            }
+        }
+        failure {
+            script {
+                if (env.BRANCH_NAME.startsWith('PR')) {
+                    setGitHubBuildStatus('Build', 'FAILURE')
+                }
+            }
+        }
+        always {
+            jiraSendBuildInfo site: "${JIRA_URL}"
+            // Archive test results
+            script {
+                if (fileExists('./tests/test_results.xml')) {
+                    junit 'tests/test_results.xml'
+                } else {
+                    echo 'No test results found'
+                }
+            }
+        }
+    }
+}
+
+void setGitHubBuildStatus(String message, String state) {
+    step([
+        $class: 'GitHubCommitStatusSetter',
+        reposSource: [$class: 'ManuallyEnteredRepositorySource', url: "${GIT_URL}"],
+        commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: "${GIT_COMMIT}"],
+        errorHandlers: [[$class: 'ChangingBuildStatusErrorHandler', result: 'UNSTABLE']],
+        statusResultSource: [ $class: 'ConditionalStatusResultSource', results: [[$class: 'AnyBuildResult', message: message, state: state]] ]
+    ])
+}
+

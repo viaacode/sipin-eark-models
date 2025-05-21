@@ -1,4 +1,5 @@
 from typing import Literal, Tuple
+from lxml.etree import _Element
 
 from pydantic_xml import BaseXmlModel, attr, element
 
@@ -8,7 +9,13 @@ ns = {
 }
 
 
-class PremisBaseModel(BaseXmlModel, ns="premis", nsmap=ns, frozen=True):
+class PremisBaseModel(
+    BaseXmlModel,
+    ns="premis",
+    nsmap=ns,
+    frozen=True,
+    arbitrary_types_allowed=True,
+):
     pass
 
 
@@ -88,7 +95,7 @@ class ObjectCharacteristics(PremisBaseModel, tag="objectCharacteristics", frozen
     # object_characteristics_extension: ...
 
 
-class OriginalName(PremisBaseModel, tag="orignalName", frozen=True):
+class OriginalName(PremisBaseModel, tag="originalName", frozen=True):
     value: str
     simple_link: str | None = attr(name="simpleLink", default=None)
 
@@ -129,13 +136,20 @@ class SignificantProperties(PremisBaseModel, tag="significantProperties", frozen
     value: str | None = element(
         tag="significantPropertiesValue", ns="premis", default=None
     )
-    extension: list[str] = element(
+    extension: list[_Element] = element(
         tag="significantPropertiesExtension", ns="premis", default_factory=list
     )
 
 
+class ContentLocation(PremisBaseModel, tag="contentLocation", frozen=True):
+    type: StringPlusAuthority = element(tag="contentLocationType", ns="premis")
+    value: str = element(tag="contentLocationValue", ns="premis")
+
+    simple_link: str | None = attr(name="simpleLink", default=None)
+
+
 class Storage(PremisBaseModel, tag="storage", frozen=True):
-    # content_location: ... | None
+    content_location: ContentLocation | None = element(default=None)
     storage_medium: StringPlusAuthority | None = element(
         tag="storageMedium", ns="premis", default=None
     )
@@ -282,7 +296,7 @@ class Agent(PremisBaseModel, tag="agent", frozen=True):
 
 class EventIdentifier(PremisBaseModel, tag="eventIdentifier", frozen=True):
     type: StringPlusAuthority = element(tag="eventIdentifierType", ns="premis")
-    value: StringPlusAuthority = element(tag="eventIdentifierValue", ns="premis")
+    value: str = element(tag="eventIdentifierValue", ns="premis")
     simple_link: str | None = attr(name="simpleLink", default=None)
 
 
