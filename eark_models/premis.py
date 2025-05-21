@@ -141,8 +141,15 @@ class SignificantProperties(PremisBaseModel, tag="significantProperties", frozen
     )
 
 
+class ContentLocation(PremisBaseModel, tag="contentLocation", frozen=True):
+    type: StringPlusAuthority = element(tag="contentLocationType", ns="premis")
+    value: str = element(tag="contentLocationValue", ns="premis")
+
+    simple_link: str | None = attr(name="simpleLink", default=None)
+
+
 class Storage(PremisBaseModel, tag="storage", frozen=True):
-    # content_location: ... | None
+    content_location: ContentLocation | None = element(default=None)
     storage_medium: StringPlusAuthority | None = element(
         tag="storageMedium", ns="premis", default=None
     )
