@@ -296,7 +296,7 @@ class Agent(PremisBaseModel, tag="agent", frozen=True):
 
 class EventIdentifier(PremisBaseModel, tag="eventIdentifier", frozen=True):
     type: StringPlusAuthority = element(tag="eventIdentifierType", ns="premis")
-    value: StringPlusAuthority = element(tag="eventIdentifierValue", ns="premis")
+    value: str = element(tag="eventIdentifierValue", ns="premis")
     simple_link: str | None = attr(name="simpleLink", default=None)
 
 
