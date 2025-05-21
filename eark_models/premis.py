@@ -1,4 +1,5 @@
 from typing import Literal, Tuple
+from lxml.etree import _Element
 
 from pydantic_xml import BaseXmlModel, attr, element
 
@@ -8,7 +9,13 @@ ns = {
 }
 
 
-class PremisBaseModel(BaseXmlModel, ns="premis", nsmap=ns, frozen=True):
+class PremisBaseModel(
+    BaseXmlModel,
+    ns="premis",
+    nsmap=ns,
+    frozen=True,
+    arbitrary_types_allowed=True,
+):
     pass
 
 
@@ -129,7 +136,7 @@ class SignificantProperties(PremisBaseModel, tag="significantProperties", frozen
     value: str | None = element(
         tag="significantPropertiesValue", ns="premis", default=None
     )
-    extension: list[str] = element(
+    extension: list[_Element] = element(
         tag="significantPropertiesExtension", ns="premis", default_factory=list
     )
 
