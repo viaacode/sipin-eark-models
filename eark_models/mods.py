@@ -1,6 +1,7 @@
-from typing import Literal, Any, Self
+from typing import Literal, Any, Self, cast
 
 from xml.etree.ElementTree import Element
+from xml.etree import ElementTree
 
 from pydantic import BaseModel, Field
 
@@ -167,6 +168,10 @@ class Date(BaseModel):
             calendar=root.attrib.get("calendar"),
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 ######## Role
 
@@ -178,6 +183,10 @@ class RoleTerm(BaseModel):
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_authority.string_plus_language.value
 
 
 class Role(BaseModel):
@@ -219,6 +228,10 @@ class Abstract(BaseModel):
             alt_format_attributes=AltFormatAttributes.from_xml_tree(root),
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 ########## Top level: Genre
 
@@ -250,6 +263,10 @@ class Genre(BaseModel):
             usage=usage,
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_authority.string_plus_language.value
+
 
 ########## Top level: Identifier
 
@@ -279,6 +296,10 @@ class Identifier(BaseModel):
             invalid=invalid,
             alt_rep_group=root.attrib.get("altRepGroup"),
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
 
 
 ########################
@@ -318,6 +339,10 @@ class LanguageTerm(BaseModel):
             type=type,
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 class ScriptTerm(BaseModel):
     string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
@@ -336,6 +361,10 @@ class ScriptTerm(BaseModel):
             ),
             type=type,
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_authority.string_plus_language.value
 
 
 class Language(BaseModel):
@@ -391,6 +420,10 @@ class DisplayForm(BaseModel):
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 class Affiliation(BaseModel):
 
@@ -400,6 +433,10 @@ class Affiliation(BaseModel):
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 class Description(BaseModel):
     string_plus_language: StringPlusLanguage
@@ -407,6 +444,10 @@ class Description(BaseModel):
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
 
 
 # There are two ways to specify the name element
@@ -491,6 +532,10 @@ class PlaceTerm(BaseModel):
             type=type,
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 class Place(BaseModel):
     terms: list[PlaceTerm] = Field(min_length=1)
@@ -522,6 +567,10 @@ class Publisher(BaseModel):
             ),
             authority_attributes=AuthorityAttributes.from_xml_tree(root),
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_supplied.string_plus_language.value
 
 
 class DateIssued(BaseModel):
@@ -693,6 +742,70 @@ class OriginInfo(BaseModel):
             case _:
                 raise InvalidXMLError()
 
+    @property
+    def places(self) -> list[Place]:
+        return [cast(Place, p) for p in self.properties if isinstance(p, Place)]
+
+    @property
+    def publishers(self) -> list[Publisher]:
+        return [cast(Publisher, p) for p in self.properties if isinstance(p, Publisher)]
+
+    @property
+    def datesIssued(self) -> list[DateIssued]:
+        return [
+            cast(DateIssued, p) for p in self.properties if isinstance(p, DateIssued)
+        ]
+
+    @property
+    def datesCreated(self) -> list[DateCreated]:
+        return [
+            cast(DateCreated, p) for p in self.properties if isinstance(p, DateCreated)
+        ]
+
+    @property
+    def datesCaptured(self) -> list[DateCaptured]:
+        return [
+            cast(DateCaptured, p)
+            for p in self.properties
+            if isinstance(p, DateCaptured)
+        ]
+
+    @property
+    def datesValid(self) -> list[DateValid]:
+        return [cast(DateValid, p) for p in self.properties if isinstance(p, DateValid)]
+
+    @property
+    def datesModified(self) -> list[DateModified]:
+        return [
+            cast(DateModified, p)
+            for p in self.properties
+            if isinstance(p, DateModified)
+        ]
+
+    @property
+    def copyrightDates(self) -> list[CopyrightDate]:
+        return [
+            cast(CopyrightDate, p)
+            for p in self.properties
+            if isinstance(p, CopyrightDate)
+        ]
+
+    @property
+    def datesOther(self) -> list[DateOther]:
+        return [cast(DateOther, p) for p in self.properties if isinstance(p, DateOther)]
+
+    @property
+    def editions(self) -> list[Edition]:
+        return [cast(Edition, p) for p in self.properties if isinstance(p, Edition)]
+
+    @property
+    def issuances(self) -> list[Issuance]:
+        return [cast(Issuance, p) for p in self.properties if isinstance(p, Issuance)]
+
+    @property
+    def frequencies(self) -> list[Frequency]:
+        return [cast(Frequency, p) for p in self.properties if isinstance(p, Frequency)]
+
 
 ####### Top level: Physical description
 
@@ -710,6 +823,10 @@ class Form(BaseModel):
             type=root.attrib.get("type"),
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_authority.string_plus_language.value
+
 
 class Extent(BaseModel):
     string_plus_language_plus_supplied: StringPlusLanguagePlusSupplied
@@ -723,6 +840,10 @@ class Extent(BaseModel):
             ),
             unit=root.attrib.get("unit"),
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_supplied.string_plus_language.value
 
 
 class ReformattingQuality(BaseModel):
@@ -761,6 +882,10 @@ class PhysicalDescriptionNote(BaseModel):
             simple_link=SimpleLink.from_xml_tree(root),
             id=root.attrib.get("ID"),
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
 
 
 PhysicalDescriptionProperty = (
@@ -882,6 +1007,10 @@ class Topic(BaseModel):
             ),
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_authority.string_plus_language.value
+
 
 class Geographic(BaseModel):
     string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
@@ -893,6 +1022,10 @@ class Geographic(BaseModel):
                 root
             ),
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_authority.string_plus_language.value
 
 
 class Temporal(BaseModel):
@@ -1021,6 +1154,10 @@ class RecordContentSource(BaseModel):
             ),
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_authority.string_plus_language.value
+
 
 class RecordCreationDate(BaseModel):
     date: Date
@@ -1052,6 +1189,10 @@ class RecordIdentifier(BaseModel):
             string_plus_language=StringPlusLanguage.from_xml_tree(root),
             source=root.attrib.get("source"),
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
 
 
 class LanguageOfCataloging(BaseModel):
@@ -1219,6 +1360,10 @@ class TypeOfResource(BaseModel):
             usage=usage,
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language_plus_authority.string_plus_language.value
+
 
 ########## Top level: Title Info
 
@@ -1232,6 +1377,10 @@ class Title(BaseModel):
             string_plus_language=StringPlusLanguage.from_xml_tree(root),
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 class SubTitle(BaseModel):
     string_plus_language: StringPlusLanguage
@@ -1241,6 +1390,10 @@ class SubTitle(BaseModel):
         return cls(
             string_plus_language=StringPlusLanguage.from_xml_tree(root),
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
 
 
 class PartNumber(BaseModel):
@@ -1252,6 +1405,10 @@ class PartNumber(BaseModel):
             string_plus_language=StringPlusLanguage.from_xml_tree(root),
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 class PartName(BaseModel):
     string_plus_language: StringPlusLanguage
@@ -1262,6 +1419,10 @@ class PartName(BaseModel):
             string_plus_language=StringPlusLanguage.from_xml_tree(root),
         )
 
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
+
 
 class NonSort(BaseModel):
     string_plus_language: StringPlusLanguage
@@ -1270,6 +1431,10 @@ class NonSort(BaseModel):
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
 
 
 TitleInfoProperty = Title | SubTitle | PartNumber | PartName | NonSort
@@ -1346,6 +1511,28 @@ class TitleInfo(BaseModel):
             case _:
                 raise InvalidXMLError()
 
+    @property
+    def titles(self) -> list[Title]:
+        return [cast(Title, p) for p in self.properties if isinstance(p, Title)]
+
+    @property
+    def subTitles(self) -> list[SubTitle]:
+        return [cast(SubTitle, p) for p in self.properties if isinstance(p, SubTitle)]
+
+    @property
+    def partNumbers(self) -> list[PartNumber]:
+        return [
+            cast(PartNumber, p) for p in self.properties if isinstance(p, PartNumber)
+        ]
+
+    @property
+    def partNames(self) -> list[PartName]:
+        return [cast(PartName, p) for p in self.properties if isinstance(p, PartName)]
+
+    @property
+    def nonSorts(self) -> list[NonSort]:
+        return [cast(NonSort, p) for p in self.properties if isinstance(p, NonSort)]
+
 
 ##### Top level: Note
 
@@ -1370,6 +1557,10 @@ class Note(BaseModel):
             id=root.attrib.get("ID"),
             alt_rep_group=root.attrib.get("altRepGroup"),
         )
+
+    @property
+    def value(self) -> str:
+        return self.string_plus_language.value
 
 
 #### Top level: MODS
@@ -1415,6 +1606,11 @@ class MODS(BaseModel):
 
     # id: ID | None
     version: ModsVersions | None
+
+    @classmethod
+    def from_xml(cls, path: str) -> Self:
+        root = ElementTree.parse(path).getroot()
+        return cls.from_xml_tree(root)
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
@@ -1482,6 +1678,118 @@ class MODS(BaseModel):
                 return TypeOfResource.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()
+
+    @property
+    def abstracts(self) -> list[Abstract]:
+        return [cast(Abstract, p) for p in self.properties if isinstance(p, Abstract)]
+
+    @property
+    def accessConditions(self) -> list[AccessCondition]:
+        return [
+            cast(AccessCondition, p)
+            for p in self.properties
+            if isinstance(p, AccessCondition)
+        ]
+
+    @property
+    def classifications(self) -> list[Classification]:
+        return [
+            cast(Classification, p)
+            for p in self.properties
+            if isinstance(p, Classification)
+        ]
+
+    @property
+    def extensions(self) -> list[Extension]:
+        return [cast(Extension, p) for p in self.properties if isinstance(p, Extension)]
+
+    @property
+    def genres(self) -> list[Genre]:
+        return [cast(Genre, p) for p in self.properties if isinstance(p, Genre)]
+
+    @property
+    def identifiers(self) -> list[Identifier]:
+        return [
+            cast(Identifier, p) for p in self.properties if isinstance(p, Identifier)
+        ]
+
+    @property
+    def languages(self) -> list[Language]:
+        return [cast(Language, p) for p in self.properties if isinstance(p, Language)]
+
+    @property
+    def locations(self) -> list[Location]:
+        return [cast(Location, p) for p in self.properties if isinstance(p, Location)]
+
+    @property
+    def names(self) -> list[Name]:
+        return [cast(Name, p) for p in self.properties if isinstance(p, Name)]
+
+    @property
+    def notes(self) -> list[Note]:
+        return [cast(Note, p) for p in self.properties if isinstance(p, Note)]
+
+    @property
+    def originInfos(self) -> list[OriginInfo]:
+        return [
+            cast(OriginInfo, p) for p in self.properties if isinstance(p, OriginInfo)
+        ]
+
+    @property
+    def parts(self) -> list[Part]:
+        return [cast(Part, p) for p in self.properties if isinstance(p, Part)]
+
+    @property
+    def physicalDescriptions(self) -> list[PhysicalDescription]:
+        return [
+            cast(PhysicalDescription, p)
+            for p in self.properties
+            if isinstance(p, PhysicalDescription)
+        ]
+
+    @property
+    def recordInfos(self) -> list[RecordInfo]:
+        return [
+            cast(RecordInfo, p) for p in self.properties if isinstance(p, RecordInfo)
+        ]
+
+    @property
+    def relatedItems(self) -> list[RelatedItem]:
+        return [
+            cast(RelatedItem, p) for p in self.properties if isinstance(p, RelatedItem)
+        ]
+
+    @property
+    def subjects(self) -> list[Subject]:
+        return [cast(Subject, p) for p in self.properties if isinstance(p, Subject)]
+
+    @property
+    def tableOfContentss(self) -> list[TableOfContents]:
+        return [
+            cast(TableOfContents, p)
+            for p in self.properties
+            if isinstance(p, TableOfContents)
+        ]
+
+    @property
+    def targetAudiences(self) -> list[TargetAudience]:
+        return [
+            cast(TargetAudience, p)
+            for p in self.properties
+            if isinstance(p, TargetAudience)
+        ]
+
+    @property
+    def titleInfos(self) -> list[TitleInfo]:
+        return [cast(TitleInfo, p) for p in self.properties if isinstance(p, TitleInfo)]
+
+    @property
+    def typeOfResources(self) -> list[TypeOfResource]:
+        return [
+            cast(TypeOfResource, p)
+            for p in self.properties
+            if isinstance(p, TypeOfResource)
+        ]
 
 
 class MODSCollection(BaseModel):
