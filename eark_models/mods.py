@@ -1,4 +1,5 @@
 from typing import Literal, Any, Self, cast
+from pathlib import Path
 
 from xml.etree.ElementTree import Element
 from xml.etree import ElementTree
@@ -1608,7 +1609,7 @@ class MODS(BaseModel):
     version: ModsVersions | None
 
     @classmethod
-    def from_xml(cls, path: str) -> Self:
+    def from_xml(cls, path: str | Path) -> Self:
         root = ElementTree.parse(path).getroot()
         return cls.from_xml_tree(root)
 
