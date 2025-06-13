@@ -1,18 +1,33 @@
-from typing import Literal, Any, Self, cast
+#            ooo        ooooo   .oooooo.   oooooooooo.    .oooooo..o
+#            `88.       .888'  d8P'  `Y8b  `888'   `Y8b  d8P'    `Y8
+#             888b     d'888  888      888  888      888 Y88bo.
+#             8 Y88. .P  888  888      888  888      888  `"Y8888o.
+#             8  `888'   888  888      888  888      888      `"Y88b
+#             8    Y     888  `88b    d88'  888     d88' oo     .d8P
+#            o8o        o888o  `Y8bood8P'  o888bood8P'   8""88888P'
+#
+#                   Metadata Object Description Schema.
+#                  See http://www.loc.gov/standards/mods/
+
+from typing import Literal, Any, Self, cast, TypedDict
 from pathlib import Path
+from enum import Enum
+from dataclasses import dataclass
 
 from xml.etree.ElementTree import Element
 from xml.etree import ElementTree
 
-from pydantic import BaseModel, Field
-
 from eark_models.utils import InvalidXMLError
-from eark_models.xlink import SimpleLink
+from eark_models.xlink import parse_simple_link
 
 ns = {
     "mods": "http://www.loc.gov/mods/v3",
     "xlink": "http://www.w3.org/1999/xlink",
 }
+
+
+class XML(str, Enum):
+    lang = "{http://www.w3.org/XML/1998/namespace}lang"
 
 
 class ModsMeta(type):
@@ -27,103 +42,151 @@ AnyURI = str
 AnySimpleType = Any
 ID = str
 
-####### common attributes
+#  _____                     _       _ _      _
+# |_   _|   _ _ __   ___  __| |   __| (_) ___| |_
+#   | || | | | '_ \ / _ \/ _` |  / _` | |/ __| __|
+#   | || |_| | |_) |  __/ (_| | | (_| | | (__| |_
+#   |_| \__, | .__/ \___|\__,_|  \__,_|_|\___|\__|
+#       |___/|_|
+"""
+The typed dicts are used as hints for the static type checker.
+"""
 
 
-class LanguageAttributes(BaseModel):
+class LanguageAttributes(TypedDict):
     lang: str | None
     xml_lang: str | None
     script: str | None
     transliteration: str | None
 
-    @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
 
-        return cls(
-            lang=root.attrib.get("lang"),
-            xml_lang=root.attrib.get("xml:lang"),
-            script=root.attrib.get("script"),
-            transliteration=root.attrib.get("transliteration"),
-        )
-
-
-class AuthorityAttributes(BaseModel):
+class AuthorityAttributes(TypedDict):
     authority: str | None
     authority_uri: AnyURI | None
     value_uri: AnyURI | None
 
-    @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            authority=root.attrib.get("authority"),
-            authority_uri=root.attrib.get("authorityURI"),
-            value_uri=root.attrib.get("valueURI"),
-        )
+
+class StringPlusLanguage(TypedDict):
+    text: str
+
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
 
-class StringPlusLanguage(BaseModel):
-    value: str
-    language_attributes: LanguageAttributes
+class StringPlusLanguagePlusSupplied(TypedDict):
+    text: str
 
-    @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        text = root.text
-        if text is None:
-            raise ValueError()
-        return cls(
-            value=text,
-            language_attributes=LanguageAttributes.from_xml_tree(root),
-        )
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
-
-class StringPlusLanguagePlusSupplied(BaseModel):
-    string_plus_language: StringPlusLanguage
+    # Supplied attribute
     supplied: Literal["yes"]
 
-    @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        supplied = root.attrib.get("supplied")
-        if supplied is None:
-            supplied = "yes"
-        if supplied != "yes":
-            raise ValueError()
-        return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
-            supplied=supplied,
-        )
+
+class StringPlusLanguagePlusAuthority(TypedDict):
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
 
 
-class StringPlusLanguagePlusAuthority(BaseModel):
-    string_plus_language: StringPlusLanguage
-    authority_attributes: AuthorityAttributes
-
-    @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
-            authority_attributes=AuthorityAttributes.from_xml_tree(root),
-        )
-
-
-class AltFormatAttributes(BaseModel):
+class AltFormatAttributes(TypedDict):
     alt_format: AnyURI | None
     content_type: str | None
 
-    @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            alt_format=root.attrib.get("altFormat"),
-            content_type=root.attrib.get("contentType"),
-        )
+
+def parse_string_plus_language(element: Element) -> StringPlusLanguage:
+    if element.text is None:
+        raise ValueError()
+    return {
+        "text": element.text,
+        "lang": element.attrib.get("lang"),
+        "xml_lang": element.attrib.get("{http://www.w3.org/XML/1998/namespace}lang"),
+        "script": element.attrib.get("script"),
+        "transliteration": element.attrib.get("transliteration"),
+    }
 
 
-###### Common types
+def parse_language_attributes(element: Element) -> LanguageAttributes:
+    return {
+        "lang": element.attrib.get("lang"),
+        "xml_lang": element.attrib.get("{http://www.w3.org/XML/1998/namespace}lang"),
+        "script": element.attrib.get("script"),
+        "transliteration": element.attrib.get("transliteration"),
+    }
+
+
+def parse_authority_attributes(element: Element) -> AuthorityAttributes:
+    return {
+        "authority": element.attrib.get("authority"),
+        "authority_uri": element.attrib.get("authorityURI"),
+        "value_uri": element.attrib.get("valueURI"),
+    }
+
+
+def parse_string_plus_language_plus_supplied(
+    element: Element,
+) -> StringPlusLanguagePlusSupplied:
+    supplied = element.attrib.get("supplied")
+    if supplied is None:
+        supplied = "yes"
+    if supplied != "yes":
+        raise ValueError()
+    return {
+        **parse_string_plus_language(element),
+        "supplied": supplied,
+    }
+
+
+def parse_string_plus_language_plus_authority(
+    element: Element,
+) -> StringPlusLanguagePlusAuthority:
+    return {
+        **parse_string_plus_language(element),
+        **parse_authority_attributes(element),
+    }
+
+
+def parse_alt_format_attributes(element: Element) -> AltFormatAttributes:
+    return {
+        "alt_format": element.attrib.get("altFormat"),
+        "content_type": element.attrib.get("contentType"),
+    }
+
+
+#   ____                                        _
+#  / ___|___  _ __ ___  _ __ ___   ___  _ __   | |_ _   _ _ __   ___  ___
+# | |   / _ \| '_ ` _ \| '_ ` _ \ / _ \| '_ \  | __| | | | '_ \ / _ \/ __|
+# | |__| (_) | | | | | | | | | | | (_) | | | | | |_| |_| | |_) |  __/\__ \
+#  \____\___/|_| |_| |_|_| |_| |_|\___/|_| |_|  \__|\__, | .__/ \___||___/
+#                                                   |___/|_|
 
 CodeOrText = Literal["code", "text"]
 
 
-class Date(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class Date:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     encoding: Literal["w3cdtf", "iso8601", "marc", "temper", "edtf"] | None
     qualifier: Literal["approximate", "inferred", "questionable"] | None
     point: Literal["start", "end"] | None
@@ -161,7 +224,7 @@ class Date(BaseModel):
             raise ValueError()
 
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
             encoding=encoding,
             qualifier=qualifier,
             point=point,
@@ -169,15 +232,16 @@ class Date(BaseModel):
             calendar=root.attrib.get("calendar"),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
+
+#  ____       _
+# |  _ \ ___ | | ___
+# | |_) / _ \| |/ _ \
+# |  _ < (_) | |  __/
+# |_| \_\___/|_|\___|
 
 
-######## Role
-
-
-class RoleTerm(BaseModel):
+@dataclass
+class RoleTerm:
     string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
     type: CodeOrText | None
 
@@ -185,30 +249,51 @@ class RoleTerm(BaseModel):
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_authority.string_plus_language.value
 
-
-class Role(BaseModel):
-    role_terms: list[RoleTerm] = Field(min_length=1)
+@dataclass
+class Role:
+    role_terms: list[RoleTerm]
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-########## Top level: Abstract
+#    _    _         _                  _
+#   / \  | |__  ___| |_ _ __ __ _  ___| |_
+#  / _ \ | '_ \/ __| __| '__/ _` |/ __| __|
+# / ___ \| |_) \__ \ |_| | | (_| | (__| |_
+# /_/   \_\_.__/|___/\__|_|  \__,_|\___|\__|
 
 
-class Abstract(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class Abstract:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     display_label: str | None
     type: str | None
-    simple_link: SimpleLink | None
+
+    # Simple link attributes
+    xlink_type: Literal["simple"] | None
+    xlink_href: AnyURI | None
+    xlink_role: str | None
+    xlink_arcrole: str | None
+    xlink_title: str | None
+    xlink_show: Literal["new", "replace", "embed", "other", "none"] | None
+    xlink_actuate: Literal["onLoad", "onRequest", "other", "none"] | None
+
     shareable: Literal["no"]
     alt_rep_group: str | None
-    alt_format_attributes: AltFormatAttributes
+
+    # Alternative_format_attributes
+    alt_format: AnyURI | None
+    content_type: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
@@ -220,25 +305,36 @@ class Abstract(BaseModel):
             raise ValueError()
 
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
             display_label=root.attrib.get("displayLabel"),
             type=root.attrib.get("type"),
-            simple_link=SimpleLink.from_xml_tree(root),
+            **parse_simple_link(root),
             shareable=shareable,
             alt_rep_group=root.attrib.get("altRepGroup"),
-            alt_format_attributes=AltFormatAttributes.from_xml_tree(root),
+            **parse_alt_format_attributes(root),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
+#   ____
+#  / ___| ___ _ __  _ __ ___
+# | |  _ / _ \ '_ \| '__/ _ \
+# | |_| |  __/ | | | | |  __/
+#  \____|\___|_| |_|_|  \___|
+@dataclass
+class Genre:
+    text: str
 
-########## Top level: Genre
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
 
-class Genre(BaseModel):
-    string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
     type: str | None
     display_label: str | None
     alt_rep_group: str | None
@@ -255,25 +351,31 @@ class Genre(BaseModel):
             raise ValueError()
 
         return cls(
-            string_plus_language_plus_authority=StringPlusLanguagePlusAuthority.from_xml_tree(
-                root
-            ),
+            **parse_string_plus_language_plus_authority(root),
             type=root.attrib.get("type"),
             display_label=root.attrib.get("displayLabel"),
             alt_rep_group=root.attrib.get("altRepGroup"),
             usage=usage,
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_authority.string_plus_language.value
+
+#  ___    _            _   _  __ _
+# |_ _|__| | ___ _ __ | |_(_)/ _(_) ___ _ __
+#  | |/ _` |/ _ \ '_ \| __| | |_| |/ _ \ '__|
+#  | | (_| |  __/ | | | |_| |  _| |  __/ |
+# |___\__,_|\___|_| |_|\__|_|_| |_|\___|_|
 
 
-########## Top level: Identifier
+@dataclass
+class Identifier:
+    text: str
 
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
-class Identifier(BaseModel):
-    string_plus_language: StringPlusLanguage
     display_label: str | None
     type: str | None
     type_uri: str | None
@@ -290,7 +392,7 @@ class Identifier(BaseModel):
             raise ValueError()
 
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
             display_label=root.attrib.get("displayLabel"),
             type=root.attrib.get("type"),
             type_uri=root.attrib.get("typeURI"),
@@ -298,18 +400,25 @@ class Identifier(BaseModel):
             alt_rep_group=root.attrib.get("altRepGroup"),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
+
+#  _
+# | |    __ _ _ __   __ _ _   _  __ _  __ _  ___
+# | |   / _` | '_ \ / _` | | | |/ _` |/ _` |/ _ \
+# | |__| (_| | | | | (_| | |_| | (_| | (_| |  __/
+# |_____\__,_|_| |_|\__, |\__,_|\__,_|\__, |\___|
+#                   |___/             |___/
 
 
-########################
-#       Top level: Language       #
-# ######################
+@dataclass
+class LanguageTerm:
+    text: str
 
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
-class LanguageTerm(BaseModel):
-    string_plus_language: StringPlusLanguage
     authority_uri: AnyURI | None
     value_uri: AnyURI | None
     authority: Literal["rfc3066", "iso639-2b", "iso639-3", "rfc4646", "rfc5646"] | None
@@ -333,20 +442,29 @@ class LanguageTerm(BaseModel):
             raise ValueError()
 
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
             authority_uri=root.attrib.get("authorityURI"),
             value_uri=root.attrib.get("valueURI"),
             authority=authority,
             type=type,
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
+@dataclass
+class ScriptTerm:
+    text: str
 
-class ScriptTerm(BaseModel):
-    string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
+
     type: CodeOrText | None
 
     @classmethod
@@ -357,22 +475,23 @@ class ScriptTerm(BaseModel):
             raise ValueError()
 
         return cls(
-            string_plus_language_plus_authority=StringPlusLanguagePlusAuthority.from_xml_tree(
-                root
-            ),
+            **parse_string_plus_language_plus_authority(root),
             type=type,
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_authority.string_plus_language.value
 
-
-class Language(BaseModel):
-    language_term: list[LanguageTerm] = Field(min_length=1)
+@dataclass
+class Language:
+    language_term: list[LanguageTerm]
     script_term: list[ScriptTerm]
     object_part: str | None
-    language_attributes: LanguageAttributes
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     display_label: str | None
     alt_rep_group: str | None
     usage: Literal["primary"]
@@ -390,23 +509,33 @@ class Language(BaseModel):
         script_terms = root.iterfind(_MODS.scriptTerm)
 
         return cls(
+            **parse_language_attributes(root),
             language_term=[LanguageTerm.from_xml_tree(el) for el in lang_terms],
             script_term=[ScriptTerm.from_xml_tree(el) for el in script_terms],
             object_part=root.attrib.get("objectPart"),
-            language_attributes=LanguageAttributes.from_xml_tree(root),
             display_label=root.attrib.get("displayLabel"),
             alt_rep_group=root.attrib.get("altRepGroup"),
             usage=usage,
         )
 
 
-########################
-#         Top level: Name         #
-# ######################
+#  _   _
+# | \ | | __ _ _ __ ___   ___
+# |  \| |/ _` | '_ ` _ \ / _ \
+# | |\  | (_| | | | | | |  __/
+# |_| \_|\__,_|_| |_| |_|\___|
 
 
-class NamePart(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class NamePart:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     type: Literal["date", "family", "given", "termsOfAddress"]
 
     @classmethod
@@ -414,41 +543,49 @@ class NamePart(BaseModel):
         raise NotImplementedError()
 
 
-class DisplayForm(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class DisplayForm:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
+@dataclass
+class Affiliation:
+    text: str
 
-class Affiliation(BaseModel):
-
-    string_plus_language: StringPlusLanguage
-
-    @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        raise NotImplementedError()
-
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
-
-
-class Description(BaseModel):
-    string_plus_language: StringPlusLanguage
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
+
+@dataclass
+class Description:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    @classmethod
+    def from_xml_tree(cls, root: Element) -> Self:
+        raise NotImplementedError()
 
 
 # There are two ways to specify the name element
@@ -456,7 +593,8 @@ class Description(BaseModel):
 # 2. without `et. al`
 
 
-class NameNoEtal(BaseModel):
+@dataclass
+class NameNoEtal:
     options: list[
         NamePart
         # | DisplayForm
@@ -472,7 +610,8 @@ class NameNoEtal(BaseModel):
         raise NotImplementedError()
 
 
-class NameEtal(BaseModel):
+@dataclass
+class NameEtal:
     # etal: ...
     # options: list[Affiliation | Role | Description]
     pass
@@ -482,7 +621,8 @@ class NameEtal(BaseModel):
         raise NotImplementedError()
 
 
-class Name(BaseModel):
+@dataclass
+class Name:
     content: NameNoEtal | NameEtal
     type: Literal["personal", "corporate", "conference", "family"]
     # display_label: str | None
@@ -490,9 +630,25 @@ class Name(BaseModel):
     # name_title_group: str | None
     # usage: Literal["primary"]
 
-    language_attributes: LanguageAttributes
-    authority_attributes: AuthorityAttributes
-    simple_link: SimpleLink
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
+
+    # Simple link attributes
+    xlink_type: Literal["simple"] | None
+    xlink_href: AnyURI | None
+    xlink_role: str | None
+    xlink_arcrole: str | None
+    xlink_title: str | None
+    xlink_show: Literal["new", "replace", "embed", "other", "none"] | None
+    xlink_actuate: Literal["onLoad", "onRequest", "other", "none"] | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
@@ -500,11 +656,24 @@ class Name(BaseModel):
         raise NotImplementedError()
 
 
-#### Top level: Origin info
+#   ___       _       _         _        __
+#  / _ \ _ __(_) __ _(_)_ __   (_)_ __  / _| ___
+# | | | | '__| |/ _` | | '_ \  | | '_ \| |_ / _ \
+# | |_| | |  | | (_| | | | | | | | | | |  _| (_) |
+#  \___/|_|  |_|\__, |_|_| |_| |_|_| |_|_|  \___/
+#               |___/
 
 
-class PlaceTerm(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class PlaceTerm:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     authority_uri: AnyURI | None
     value_uri: AnyURI | None
     authority: Literal["marcgac", "marccountry", "iso3166"] | None
@@ -526,20 +695,17 @@ class PlaceTerm(BaseModel):
             raise ValueError()
 
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
             authority_uri=root.attrib.get("authorityURI"),
             value_uri=root.attrib.get("valueURI"),
             authority=authority,
             type=type,
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
-
-class Place(BaseModel):
-    terms: list[PlaceTerm] = Field(min_length=1)
+@dataclass
+class Place:
+    terms: list[PlaceTerm]
     supplied: Literal["yes"]
 
     @classmethod
@@ -556,25 +722,34 @@ class Place(BaseModel):
         )
 
 
-class Publisher(BaseModel):
-    string_plus_language_plus_supplied: StringPlusLanguagePlusSupplied
-    authority_attributes: AuthorityAttributes
+@dataclass
+class Publisher:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Supplied attribute
+    supplied: Literal["yes"]
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language_plus_supplied=StringPlusLanguagePlusSupplied.from_xml_tree(
-                root
-            ),
-            authority_attributes=AuthorityAttributes.from_xml_tree(root),
+            **parse_string_plus_language_plus_supplied(root),
+            **parse_authority_attributes(root),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_supplied.string_plus_language.value
 
-
-class DateIssued(BaseModel):
+@dataclass
+class DateIssued:
     date: Date
 
     @classmethod
@@ -584,7 +759,8 @@ class DateIssued(BaseModel):
         )
 
 
-class DateCreated(BaseModel):
+@dataclass
+class DateCreated:
     date: Date
 
     @classmethod
@@ -594,7 +770,8 @@ class DateCreated(BaseModel):
         )
 
 
-class DateCaptured(BaseModel):
+@dataclass
+class DateCaptured:
     date: Date
 
     @classmethod
@@ -604,7 +781,8 @@ class DateCaptured(BaseModel):
         )
 
 
-class DateValid(BaseModel):
+@dataclass
+class DateValid:
     date: Date
 
     @classmethod
@@ -614,7 +792,8 @@ class DateValid(BaseModel):
         )
 
 
-class DateModified(BaseModel):
+@dataclass
+class DateModified:
     date: Date
 
     @classmethod
@@ -624,7 +803,8 @@ class DateModified(BaseModel):
         )
 
 
-class CopyrightDate(BaseModel):
+@dataclass
+class CopyrightDate:
     date: Date
 
     @classmethod
@@ -634,25 +814,29 @@ class CopyrightDate(BaseModel):
         )
 
 
-class DateOther(BaseModel):
+@dataclass
+class DateOther:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Edition(BaseModel):
+@dataclass
+class Edition:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Frequency(BaseModel):
+@dataclass
+class Frequency:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Issuance(BaseModel):
+@dataclass
+class Issuance:
     value: Literal[
         "continuing",
         "monographic",
@@ -697,9 +881,16 @@ OriginInfoProperty = (
 )
 
 
-class OriginInfo(BaseModel):
-    properties: list[OriginInfoProperty] = Field(min_length=1)
-    language_attributes: LanguageAttributes
+@dataclass
+class OriginInfo:
+    properties: list[OriginInfoProperty]
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     # display_label: str | None
     # alt_rep_group: str | None
     eventType: str | None
@@ -710,7 +901,7 @@ class OriginInfo(BaseModel):
         return cls(
             properties=properties,
             eventType=root.attrib.get("eventType"),
-            language_attributes=LanguageAttributes.from_xml_tree(root),
+            **parse_language_attributes(root),
         )
 
     @classmethod
@@ -808,85 +999,124 @@ class OriginInfo(BaseModel):
         return [cast(Frequency, p) for p in self.properties if isinstance(p, Frequency)]
 
 
-####### Top level: Physical description
+#  ____  _               _           _
+# |  _ \| |__  _   _ ___(_) ___ __ _| |
+# | |_) | '_ \| | | / __| |/ __/ _` | |
+# |  __/| | | | |_| \__ \ | (_| (_| | |
+# |_|   |_| |_|\__, |___/_|\___\__,_|_|
+#              |___/
+#      _                     _       _   _
+#   __| | ___  ___  ___ _ __(_)_ __ | |_(_) ___  _ __
+#  / _` |/ _ \/ __|/ __| '__| | '_ \| __| |/ _ \| '_ \
+# | (_| |  __/\__ \ (__| |  | | |_) | |_| | (_) | | | |
+#  \__,_|\___||___/\___|_|  |_| .__/ \__|_|\___/|_| |_|
+#                             |_|
 
 
-class Form(BaseModel):
-    string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
+@dataclass
+class Form:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
+
     type: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language_plus_authority=StringPlusLanguagePlusAuthority.from_xml_tree(
-                root
-            ),
+            **parse_string_plus_language_plus_authority(root),
             type=root.attrib.get("type"),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_authority.string_plus_language.value
 
+@dataclass
+class Extent:
+    text: str
 
-class Extent(BaseModel):
-    string_plus_language_plus_supplied: StringPlusLanguagePlusSupplied
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Supplied attribute
+    supplied: Literal["yes"]
+
     unit: AnySimpleType
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language_plus_supplied=StringPlusLanguagePlusSupplied.from_xml_tree(
-                root
-            ),
+            **parse_string_plus_language_plus_supplied(root),
             unit=root.attrib.get("unit"),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_supplied.string_plus_language.value
 
-
-class ReformattingQuality(BaseModel):
+@dataclass
+class ReformattingQuality:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class InternetMediaType(BaseModel):
+@dataclass
+class InternetMediaType:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class DigitalOrigin(BaseModel):
+@dataclass
+class DigitalOrigin:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class PhysicalDescriptionNote(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class PhysicalDescriptionNote:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     display_label: str | None
     type: str | None
     type_uri: AnyURI | None
-    simple_link: SimpleLink
+
+    # Simple link attributes
+    xlink_type: Literal["simple"] | None
+    xlink_href: AnyURI | None
+    xlink_role: str | None
+    xlink_arcrole: str | None
+    xlink_title: str | None
+    xlink_show: Literal["new", "replace", "embed", "other", "none"] | None
+    xlink_actuate: Literal["onLoad", "onRequest", "other", "none"] | None
+
     id: ID | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
             display_label=root.attrib.get("displayLabel"),
             type=root.attrib.get("type"),
             type_uri=root.attrib.get("typeURI"),
-            simple_link=SimpleLink.from_xml_tree(root),
+            **parse_simple_link(root),
             id=root.attrib.get("ID"),
         )
-
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
 
 PhysicalDescriptionProperty = (
@@ -899,9 +1129,16 @@ PhysicalDescriptionProperty = (
 )
 
 
-class PhysicalDescription(BaseModel):
-    properties: list[PhysicalDescriptionProperty] = Field(min_length=1)
-    language_attributes: LanguageAttributes
+@dataclass
+class PhysicalDescription:
+    properties: list[PhysicalDescriptionProperty]
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     display_label: str | None
     alt_rep_group: str | None
 
@@ -911,7 +1148,7 @@ class PhysicalDescription(BaseModel):
             properties=[
                 PhysicalDescription._parse_physical_property(el) for el in root
             ],
-            language_attributes=LanguageAttributes.from_xml_tree(root),
+            **parse_language_attributes(root),
             display_label=root.attrib.get("displayLabel"),
             alt_rep_group=root.attrib.get("altRepGroup"),
         )
@@ -935,10 +1172,15 @@ class PhysicalDescription(BaseModel):
                 raise InvalidXMLError()
 
 
-##### Top level: Related item
+#  ____      _       _           _   _ _
+# |  _ \ ___| | __ _| |_ ___  __| | (_) |_ ___ _ __ ___
+# | |_) / _ \ |/ _` | __/ _ \/ _` | | | __/ _ \ '_ ` _ \
+# |  _ <  __/ | (_| | ||  __/ (_| | | | ||  __/ | | | | |
+# |_| \_\___|_|\__,_|\__\___|\__,_| |_|\__\___|_| |_| |_|
 
 
-class RelatedItem(BaseModel):
+@dataclass
+class RelatedItem:
     properties: list["ModsProperty"]
     type: (
         Literal[
@@ -963,7 +1205,14 @@ class RelatedItem(BaseModel):
     display_label: str | None
     id: ID | None
 
-    simple_link: SimpleLink
+    # Simple link attributes
+    xlink_type: Literal["simple"] | None
+    xlink_href: AnyURI | None
+    xlink_role: str | None
+    xlink_arcrole: str | None
+    xlink_title: str | None
+    xlink_show: Literal["new", "replace", "embed", "other", "none"] | None
+    xlink_actuate: Literal["onLoad", "onRequest", "other", "none"] | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
@@ -992,80 +1241,106 @@ class RelatedItem(BaseModel):
             other_type_uri=root.attrib.get("otherTypeURI"),
             display_label=root.attrib.get("displayLabel"),
             id=root.attrib.get("ID"),
-            simple_link=SimpleLink.from_xml_tree(root),
+            **parse_simple_link(root),
         )
 
 
-#### Top level: Subject
-class Topic(BaseModel):
-    string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
+#  ____        _     _           _
+# / ___| _   _| |__ (_) ___  ___| |_
+# \___ \| | | | '_ \| |/ _ \/ __| __|
+#  ___) | |_| | |_) | |  __/ (__| |_
+# |____/ \__,_|_.__// |\___|\___|\__|
+#                 |__/
+
+
+@dataclass
+class Topic:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language_plus_authority=StringPlusLanguagePlusAuthority.from_xml_tree(
-                root
-            ),
+            **parse_string_plus_language_plus_authority(root),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_authority.string_plus_language.value
 
+@dataclass
+class Geographic:
+    text: str
 
-class Geographic(BaseModel):
-    string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language_plus_authority=StringPlusLanguagePlusAuthority.from_xml_tree(
-                root
-            ),
+            **parse_string_plus_language_plus_authority(root),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_authority.string_plus_language.value
 
-
-class Temporal(BaseModel):
+@dataclass
+class Temporal:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class SubjectTitleInfo(BaseModel):
+@dataclass
+class SubjectTitleInfo:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class SubjectName(BaseModel):
+@dataclass
+class SubjectName:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class GeographicCode(BaseModel):
+@dataclass
+class GeographicCode:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class HierarchicalGeographic(BaseModel):
+@dataclass
+class HierarchicalGeographic:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Cartographics(BaseModel):
+@dataclass
+class Cartographics:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Occupation(BaseModel):
+@dataclass
+class Occupation:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
@@ -1085,12 +1360,31 @@ SubjectProperty = (
 )
 
 
-class Subject(BaseModel):
+@dataclass
+class Subject:
     properties: list[SubjectProperty]
     id: ID | None
-    authority_attributes: AuthorityAttributes
-    language_attributes: LanguageAttributes
-    simple_link: SimpleLink
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Simple link attributes
+    xlink_type: Literal["simple"] | None
+    xlink_href: AnyURI | None
+    xlink_role: str | None
+    xlink_arcrole: str | None
+    xlink_title: str | None
+    xlink_show: Literal["new", "replace", "embed", "other", "none"] | None
+    xlink_actuate: Literal["onLoad", "onRequest", "other", "none"] | None
+
     display_label: str | None
     alt_rep_group: str | None
     usage: Literal["primary"]
@@ -1106,9 +1400,9 @@ class Subject(BaseModel):
         return cls(
             properties=[Subject._parse_subject_property(el) for el in root],
             id=root.attrib.get("ID"),
-            authority_attributes=AuthorityAttributes.from_xml_tree(root),
-            language_attributes=LanguageAttributes.from_xml_tree(root),
-            simple_link=SimpleLink.from_xml_tree(root),
+            **parse_authority_attributes(root),
+            **parse_language_attributes(root),
+            **parse_simple_link(root),
             display_label=root.attrib.get("display_label"),
             alt_rep_group=root.attrib.get("altRepGroup"),
             usage=usage,
@@ -1141,26 +1435,37 @@ class Subject(BaseModel):
                 raise InvalidXMLError()
 
 
-### Top level: RecordInfo
+#  ____                        _   _        __
+# |  _ \ ___  ___ ___  _ __ __| | (_)_ __  / _| ___
+# | |_) / _ \/ __/ _ \| '__/ _` | | | '_ \| |_ / _ \
+# |  _ <  __/ (_| (_) | | | (_| | | | | | |  _| (_) |
+# |_| \_\___|\___\___/|_|  \__,_| |_|_| |_|_|  \___/
 
 
-class RecordContentSource(BaseModel):
-    string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
+@dataclass
+class RecordContentSource:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language_plus_authority=StringPlusLanguagePlusAuthority.from_xml_tree(
-                root
-            ),
+            **parse_string_plus_language_plus_authority(root),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_authority.string_plus_language.value
 
-
-class RecordCreationDate(BaseModel):
+@dataclass
+class RecordCreationDate:
     date: Date
 
     @classmethod
@@ -1170,7 +1475,8 @@ class RecordCreationDate(BaseModel):
         )
 
 
-class RecordChangeDate(BaseModel):
+@dataclass
+class RecordChangeDate:
     date: Date
 
     @classmethod
@@ -1180,41 +1486,49 @@ class RecordChangeDate(BaseModel):
         )
 
 
-class RecordIdentifier(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class RecordIdentifier:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     source: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
             source=root.attrib.get("source"),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
-
-class LanguageOfCataloging(BaseModel):
+@dataclass
+class LanguageOfCataloging:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class RecordOrigin(BaseModel):
+@dataclass
+class RecordOrigin:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class DescriptionStandard(BaseModel):
+@dataclass
+class DescriptionStandard:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class RecordInfoNote(BaseModel):
+@dataclass
+class RecordInfoNote:
     note: "Note"
 
     @classmethod
@@ -1234,9 +1548,16 @@ RecordInfoProperty = (
 )
 
 
-class RecordInfo(BaseModel):
-    properties: list[RecordInfoProperty] = Field(min_length=1)
-    language_attributes: LanguageAttributes
+@dataclass
+class RecordInfo:
+    properties: list[RecordInfoProperty]
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     display_label: str | None
     alt_rep_group: str | None
 
@@ -1244,7 +1565,7 @@ class RecordInfo(BaseModel):
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
             properties=[RecordInfo._parse_record_info_property(el) for el in root],
-            language_attributes=LanguageAttributes.from_xml_tree(root),
+            **parse_language_attributes(root),
             display_label=root.attrib.get("displayLabel"),
             alt_rep_group=root.attrib.get("altRepGroup"),
         )
@@ -1272,57 +1593,85 @@ class RecordInfo(BaseModel):
                 raise InvalidXMLError()
 
 
-##### Other top level elements
+#   ___  _   _
+#  / _ \| |_| |__   ___ _ __
+# | | | | __| '_ \ / _ \ '__|
+# | |_| | |_| | | |  __/ |
+#  \___/ \__|_| |_|\___|_|
 
 
-class AccessCondition(BaseModel):
+@dataclass
+class AccessCondition:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Classification(BaseModel):
+@dataclass
+class Classification:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Extension(BaseModel):
+@dataclass
+class Extension:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Location(BaseModel):
+@dataclass
+class Location:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class Part(BaseModel):
+@dataclass
+class Part:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class TableOfContents(BaseModel):
+@dataclass
+class TableOfContents:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-class TargetAudience(BaseModel):
+@dataclass
+class TargetAudience:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-######## Top level: type of resource
+#  _____                          __
+# |_   _|   _ _ __   ___    ___  / _|  _ __ ___  ___  ___  _   _ _ __ ___ ___
+#   | || | | | '_ \ / _ \  / _ \| |_  | '__/ _ \/ __|/ _ \| | | | '__/ __/ _ \
+#   | || |_| | |_) |  __/ | (_) |  _| | | |  __/\__ \ (_) | |_| | | | (_|  __/
+#   |_| \__, | .__/ \___|  \___/|_|   |_|  \___||___/\___/ \__,_|_|  \___\___|
+#       |___/|_|
 
 
-class TypeOfResource(BaseModel):
+@dataclass
+class TypeOfResource:
+    text: str
 
-    string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
+
     collection: Literal["yes"]
     manuscript: Literal["yes"]
     display_label: str | None
@@ -1351,9 +1700,7 @@ class TypeOfResource(BaseModel):
             raise ValueError()
 
         return cls(
-            string_plus_language_plus_authority=StringPlusLanguagePlusAuthority.from_xml_tree(
-                root
-            ),
+            **parse_string_plus_language_plus_authority(root),
             collection=collection,
             manuscript=manuscript,
             display_label=root.attrib.get("displayLabel"),
@@ -1361,99 +1708,138 @@ class TypeOfResource(BaseModel):
             usage=usage,
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language_plus_authority.string_plus_language.value
+
+#  _____ _ _   _        _        __
+# |_   _(_) |_| | ___  (_)_ __  / _| ___
+#   | | | | __| |/ _ \ | | '_ \| |_ / _ \
+#   | | | | |_| |  __/ | | | | |  _| (_) |
+#   |_| |_|\__|_|\___| |_|_| |_|_|  \___/
 
 
-########## Top level: Title Info
+@dataclass
+class Title:
+    text: str
 
-
-class Title(BaseModel):
-    string_plus_language: StringPlusLanguage
-
-    @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
-        )
-
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
-
-
-class SubTitle(BaseModel):
-    string_plus_language: StringPlusLanguage
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
+@dataclass
+class SubTitle:
+    text: str
 
-class PartNumber(BaseModel):
-    string_plus_language: StringPlusLanguage
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
+@dataclass
+class PartNumber:
+    text: str
 
-class PartName(BaseModel):
-    string_plus_language: StringPlusLanguage
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
+
+@dataclass
+class PartName:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
+    @classmethod
+    def from_xml_tree(cls, root: Element) -> Self:
+        return cls(
+            **parse_string_plus_language(root),
+        )
 
 
-class NonSort(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class NonSort:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     xml_space: Any
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
-
 
 TitleInfoProperty = Title | SubTitle | PartNumber | PartName | NonSort
 
 
-class TitleInfo(BaseModel):
+@dataclass
+class TitleInfo:
     properties: list[TitleInfoProperty]
     type: Literal["abbreviated", "translated", "alternative", "uniform"] | None
     other_type: AnySimpleType | None
     supplied: Literal["yes"]
     alt_rep_group: str | None
-    alt_format_attributes: AltFormatAttributes
+
+    # Alternative_format_attributes
+    alt_format: AnyURI | None
+    content_type: str | None
+
     nameTitleGroup: str | None
     usage: Literal["primary"]
     id: ID | None
-    authority_attributes: AuthorityAttributes
-    simple_link: SimpleLink
-    language_attributes: LanguageAttributes
+
+    # Simple link attributes
+    xlink_type: Literal["simple"] | None
+    xlink_href: AnyURI | None
+    xlink_role: str | None
+    xlink_arcrole: str | None
+    xlink_title: str | None
+    xlink_show: Literal["new", "replace", "embed", "other", "none"] | None
+    xlink_actuate: Literal["onLoad", "onRequest", "other", "none"] | None
+
+    # Authority attributes
+    authority: str | None
+    authority_uri: AnyURI | None
+    value_uri: AnyURI | None
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     display_label: str | None
 
     @classmethod
@@ -1486,13 +1872,13 @@ class TitleInfo(BaseModel):
             other_type=root.attrib.get("other_type"),
             supplied=supplied,
             alt_rep_group=root.attrib.get("alt_rep_group"),
-            alt_format_attributes=AltFormatAttributes.from_xml_tree(root),
+            **parse_alt_format_attributes(root),
             nameTitleGroup=root.attrib.get("nameTitleGroup"),
             usage=usage,
             id=root.attrib.get("id"),
-            authority_attributes=AuthorityAttributes.from_xml_tree(root),
-            simple_link=SimpleLink.from_xml_tree(root),
-            language_attributes=LanguageAttributes.from_xml_tree(root),
+            **parse_authority_attributes(root),
+            **parse_simple_link(root),
+            **parse_language_attributes(root),
             display_label=root.attrib.get("display_label"),
         )
 
@@ -1535,36 +1921,57 @@ class TitleInfo(BaseModel):
         return [cast(NonSort, p) for p in self.properties if isinstance(p, NonSort)]
 
 
-##### Top level: Note
+#  _   _       _
+# | \ | | ___ | |_ ___
+# |  \| |/ _ \| __/ _ \
+# | |\  | (_) | ||  __/
+# |_| \_|\___/ \__\___|
 
 
-class Note(BaseModel):
-    string_plus_language: StringPlusLanguage
+@dataclass
+class Note:
+    text: str
+
+    # Language attributes
+    lang: str | None
+    xml_lang: str | None
+    script: str | None
+    transliteration: str | None
+
     display_label: str | None
     type: str | None
     type_uri: AnyURI | None
-    simple_link: SimpleLink
+
+    # Simple link attributes
+    xlink_type: Literal["simple"] | None
+    xlink_href: AnyURI | None
+    xlink_role: str | None
+    xlink_arcrole: str | None
+    xlink_title: str | None
+    xlink_show: Literal["new", "replace", "embed", "other", "none"] | None
+    xlink_actuate: Literal["onLoad", "onRequest", "other", "none"] | None
+
     id: ID | None
     alt_rep_group: str | None  # missing
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         return cls(
-            string_plus_language=StringPlusLanguage.from_xml_tree(root),
+            **parse_string_plus_language(root),
             display_label=root.attrib.get("displayLabel"),
             type=root.attrib.get("type"),
             type_uri=root.attrib.get("typeURI"),
-            simple_link=SimpleLink.from_xml_tree(root),
+            **parse_simple_link(root),
             id=root.attrib.get("ID"),
             alt_rep_group=root.attrib.get("altRepGroup"),
         )
 
-    @property
-    def value(self) -> str:
-        return self.string_plus_language.value
 
-
-#### Top level: MODS
+#  __  __  ___  ____  ____
+# |  \/  |/ _ \|  _ \/ ___|
+# | |\/| | | | | | | \___ \
+# | |  | | |_| | |_| |___) |
+# |_|  |_|\___/|____/|____/
 
 
 ModsProperty = (
@@ -1602,7 +2009,8 @@ ModsVersions = Literal[
 ]
 
 
-class MODS(BaseModel):
+@dataclass
+class MODS:
     properties: list[ModsProperty]
 
     # id: ID | None
@@ -1793,7 +2201,8 @@ class MODS(BaseModel):
         ]
 
 
-class MODSCollection(BaseModel):
+@dataclass
+class MODSCollection:
     mods: list[MODS]
 
     @classmethod
