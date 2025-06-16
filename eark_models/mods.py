@@ -194,8 +194,8 @@ class Date:
     calendar: str | None
 
     @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        encoding = root.attrib.get("encoding")
+    def from_xml_tree(cls, element: Element) -> Self:
+        encoding = element.attrib.get("encoding")
         if encoding is not None and encoding not in (
             "w3cdtf",
             "iso8601",
@@ -205,7 +205,7 @@ class Date:
         ):
             raise ValueError()
 
-        qualifier = root.attrib.get("qualifier")
+        qualifier = element.attrib.get("qualifier")
         if qualifier is not None and qualifier not in (
             "approximate",
             "inferred",
@@ -213,23 +213,23 @@ class Date:
         ):
             raise ValueError()
 
-        point = root.attrib.get("point")
+        point = element.attrib.get("point")
         if point is not None and point not in ("start", "end"):
             raise ValueError()
 
-        key_date = root.attrib.get("key_date")
+        key_date = element.attrib.get("key_date")
         if key_date is None:
             key_date = "yes"
         if key_date != "yes":
             raise ValueError()
 
         return cls(
-            **parse_string_plus_language(root),
+            **parse_string_plus_language(element),
             encoding=encoding,
             qualifier=qualifier,
             point=point,
             key_date=key_date,
-            calendar=root.attrib.get("calendar"),
+            calendar=element.attrib.get("calendar"),
         )
 
 
@@ -749,69 +749,45 @@ class Publisher:
 
 
 @dataclass
-class DateIssued:
-    date: Date
-
+class DateIssued(Date):
     @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            date=Date.from_xml_tree(root),
-        )
+    def from_xml_tree(cls, element: Element) -> Self:
+        return super().from_xml_tree(element)
 
 
 @dataclass
-class DateCreated:
-    date: Date
-
+class DateCreated(Date):
     @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            date=Date.from_xml_tree(root),
-        )
+    def from_xml_tree(cls, element: Element) -> Self:
+        return super().from_xml_tree(element)
 
 
 @dataclass
-class DateCaptured:
-    date: Date
-
+class DateCaptured(Date):
     @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            date=Date.from_xml_tree(root),
-        )
+    def from_xml_tree(cls, element: Element) -> Self:
+        return super().from_xml_tree(element)
 
 
 @dataclass
-class DateValid:
-    date: Date
-
+class DateValid(Date):
     @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            date=Date.from_xml_tree(root),
-        )
+    def from_xml_tree(cls, element: Element) -> Self:
+        return super().from_xml_tree(element)
 
 
 @dataclass
-class DateModified:
-    date: Date
-
+class DateModified(Date):
     @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            date=Date.from_xml_tree(root),
-        )
+    def from_xml_tree(cls, element: Element) -> Self:
+        return super().from_xml_tree(element)
 
 
 @dataclass
-class CopyrightDate:
-    date: Date
-
+class CopyrightDate(Date):
     @classmethod
-    def from_xml_tree(cls, root: Element) -> Self:
-        return cls(
-            date=Date.from_xml_tree(root),
-        )
+    def from_xml_tree(cls, element: Element) -> Self:
+        return super().from_xml_tree(element)
 
 
 @dataclass
