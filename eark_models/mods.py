@@ -9,7 +9,7 @@
 #                   Metadata Object Description Schema.
 #                  See http://www.loc.gov/standards/mods/
 
-from typing import Literal, Any, Self, cast, TypedDict
+from typing import Literal, Any, Self, cast, TypedDict, Generator
 from pathlib import Path
 from enum import Enum
 from pydantic.dataclasses import dataclass
@@ -2065,116 +2065,116 @@ class MODS:
                 raise InvalidXMLError()
 
     @property
-    def abstracts(self) -> list[Abstract]:
-        return [cast(Abstract, p) for p in self.properties if isinstance(p, Abstract)]
+    def abstracts(self) -> Generator[Abstract, None, None]:
+        return (cast(Abstract, p) for p in self.properties if isinstance(p, Abstract))
 
     @property
-    def accessConditions(self) -> list[AccessCondition]:
-        return [
+    def accessConditions(self) -> Generator[AccessCondition, None, None]:
+        return (
             cast(AccessCondition, p)
             for p in self.properties
             if isinstance(p, AccessCondition)
-        ]
+        )
 
     @property
-    def classifications(self) -> list[Classification]:
-        return [
+    def classifications(self) -> Generator[Classification, None, None]:
+        return (
             cast(Classification, p)
             for p in self.properties
             if isinstance(p, Classification)
-        ]
+        )
 
     @property
-    def extensions(self) -> list[Extension]:
-        return [cast(Extension, p) for p in self.properties if isinstance(p, Extension)]
+    def extensions(self) -> Generator[Extension, None, None]:
+        return (cast(Extension, p) for p in self.properties if isinstance(p, Extension))
 
     @property
-    def genres(self) -> list[Genre]:
-        return [cast(Genre, p) for p in self.properties if isinstance(p, Genre)]
+    def genres(self) -> Generator[Genre, None, None]:
+        return (cast(Genre, p) for p in self.properties if isinstance(p, Genre))
 
     @property
-    def identifiers(self) -> list[Identifier]:
-        return [
+    def identifiers(self) -> Generator[Identifier, None, None]:
+        return (
             cast(Identifier, p) for p in self.properties if isinstance(p, Identifier)
-        ]
+        )
 
     @property
-    def languages(self) -> list[Language]:
-        return [cast(Language, p) for p in self.properties if isinstance(p, Language)]
+    def languages(self) -> Generator[Language, None, None]:
+        return (cast(Language, p) for p in self.properties if isinstance(p, Language))
 
     @property
-    def locations(self) -> list[Location]:
-        return [cast(Location, p) for p in self.properties if isinstance(p, Location)]
+    def locations(self) -> Generator[Location, None, None]:
+        return (cast(Location, p) for p in self.properties if isinstance(p, Location))
 
     @property
-    def names(self) -> list[Name]:
-        return [cast(Name, p) for p in self.properties if isinstance(p, Name)]
+    def names(self) -> Generator[Name, None, None]:
+        return (cast(Name, p) for p in self.properties if isinstance(p, Name))
 
     @property
-    def notes(self) -> list[Note]:
-        return [cast(Note, p) for p in self.properties if isinstance(p, Note)]
+    def notes(self) -> Generator[Note, None, None]:
+        return (cast(Note, p) for p in self.properties if isinstance(p, Note))
 
     @property
-    def originInfos(self) -> list[OriginInfo]:
-        return [
+    def originInfos(self) -> Generator[OriginInfo, None, None]:
+        return (
             cast(OriginInfo, p) for p in self.properties if isinstance(p, OriginInfo)
-        ]
+        )
 
     @property
-    def parts(self) -> list[Part]:
-        return [cast(Part, p) for p in self.properties if isinstance(p, Part)]
+    def parts(self) -> Generator[Part, None, None]:
+        return (cast(Part, p) for p in self.properties if isinstance(p, Part))
 
     @property
-    def physicalDescriptions(self) -> list[PhysicalDescription]:
-        return [
+    def physicalDescriptions(self) -> Generator[PhysicalDescription, None, None]:
+        return (
             cast(PhysicalDescription, p)
             for p in self.properties
             if isinstance(p, PhysicalDescription)
-        ]
+        )
 
     @property
-    def recordInfos(self) -> list[RecordInfo]:
-        return [
+    def recordInfos(self) -> Generator[RecordInfo, None, None]:
+        return (
             cast(RecordInfo, p) for p in self.properties if isinstance(p, RecordInfo)
-        ]
+        )
 
     @property
-    def relatedItems(self) -> list[RelatedItem]:
-        return [
+    def relatedItems(self) -> Generator[RelatedItem, None, None]:
+        return (
             cast(RelatedItem, p) for p in self.properties if isinstance(p, RelatedItem)
-        ]
+        )
 
     @property
-    def subjects(self) -> list[Subject]:
-        return [cast(Subject, p) for p in self.properties if isinstance(p, Subject)]
+    def subjects(self) -> Generator[Subject, None, None]:
+        return (cast(Subject, p) for p in self.properties if isinstance(p, Subject))
 
     @property
-    def tableOfContentss(self) -> list[TableOfContents]:
-        return [
+    def tableOfContentss(self) -> Generator[TableOfContents, None, None]:
+        return (
             cast(TableOfContents, p)
             for p in self.properties
             if isinstance(p, TableOfContents)
-        ]
+        )
 
     @property
-    def targetAudiences(self) -> list[TargetAudience]:
-        return [
+    def targetAudiences(self) -> Generator[TargetAudience, None, None]:
+        return (
             cast(TargetAudience, p)
             for p in self.properties
             if isinstance(p, TargetAudience)
-        ]
+        )
 
     @property
-    def titleInfos(self) -> list[TitleInfo]:
-        return [cast(TitleInfo, p) for p in self.properties if isinstance(p, TitleInfo)]
+    def titleInfos(self) -> Generator[TitleInfo, None, None]:
+        return (cast(TitleInfo, p) for p in self.properties if isinstance(p, TitleInfo))
 
     @property
-    def typeOfResources(self) -> list[TypeOfResource]:
-        return [
+    def typeOfResources(self) -> Generator[TypeOfResource, None, None]:
+        return (
             cast(TypeOfResource, p)
             for p in self.properties
             if isinstance(p, TypeOfResource)
-        ]
+        )
 
 
 @dataclass
