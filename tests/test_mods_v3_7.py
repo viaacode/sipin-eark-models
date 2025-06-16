@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from eark_models.mods import Mods
+from eark_models.mods.v3_7 import Mods
 
 root = Path("tests/sip-examples")
 mods_files = root.rglob("mods.xml")
