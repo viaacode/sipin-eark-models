@@ -12,7 +12,7 @@
 from typing import Literal, Any, Self, cast, TypedDict
 from pathlib import Path
 from enum import Enum
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 
 from xml.etree.ElementTree import Element
 from xml.etree import ElementTree
