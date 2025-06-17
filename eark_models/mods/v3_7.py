@@ -18,7 +18,11 @@ from xml.etree.ElementTree import Element
 from xml.etree import ElementTree
 
 from eark_models.utils import InvalidXMLError
-from eark_models.xlink import parse_simple_link
+from eark_models.xlink.v2 import parse_simple_link
+
+__all__ = [
+    "Mods",
+]
 
 ns = {
     "mods": "http://www.loc.gov/mods/v3",
