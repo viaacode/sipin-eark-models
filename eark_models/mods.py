@@ -911,68 +911,68 @@ class OriginInfo:
                 raise InvalidXMLError()
 
     @property
-    def places(self) -> list[Place]:
-        return [cast(Place, p) for p in self.properties if isinstance(p, Place)]
+    def places(self) -> Generator[Place, None, None]:
+        return (cast(Place, p) for p in self.properties if isinstance(p, Place))
 
     @property
-    def publishers(self) -> list[Publisher]:
-        return [cast(Publisher, p) for p in self.properties if isinstance(p, Publisher)]
+    def publishers(self) -> Generator[Publisher, None, None]:
+        return (cast(Publisher, p) for p in self.properties if isinstance(p, Publisher))
 
     @property
-    def dates_issued(self) -> list[DateIssued]:
-        return [
+    def dates_issued(self) -> Generator[DateIssued, None, None]:
+        return (
             cast(DateIssued, p) for p in self.properties if isinstance(p, DateIssued)
-        ]
+        )
 
     @property
-    def dates_created(self) -> list[DateCreated]:
-        return [
+    def dates_created(self) -> Generator[DateCreated, None, None]:
+        return (
             cast(DateCreated, p) for p in self.properties if isinstance(p, DateCreated)
-        ]
+        )
 
     @property
-    def dates_captured(self) -> list[DateCaptured]:
-        return [
+    def dates_captured(self) -> Generator[DateCaptured, None, None]:
+        return (
             cast(DateCaptured, p)
             for p in self.properties
             if isinstance(p, DateCaptured)
-        ]
+        )
 
     @property
-    def dates_valid(self) -> list[DateValid]:
-        return [cast(DateValid, p) for p in self.properties if isinstance(p, DateValid)]
+    def dates_valid(self) -> Generator[DateValid, None, None]:
+        return (cast(DateValid, p) for p in self.properties if isinstance(p, DateValid))
 
     @property
-    def dates_modified(self) -> list[DateModified]:
-        return [
+    def dates_modified(self) -> Generator[DateModified, None, None]:
+        return (
             cast(DateModified, p)
             for p in self.properties
             if isinstance(p, DateModified)
-        ]
+        )
 
     @property
-    def copyright_dates(self) -> list[CopyrightDate]:
-        return [
+    def copyright_dates(self) -> Generator[CopyrightDate, None, None]:
+        return (
             cast(CopyrightDate, p)
             for p in self.properties
             if isinstance(p, CopyrightDate)
-        ]
+        )
 
     @property
-    def dates_other(self) -> list[DateOther]:
-        return [cast(DateOther, p) for p in self.properties if isinstance(p, DateOther)]
+    def dates_other(self) -> Generator[DateOther, None, None]:
+        return (cast(DateOther, p) for p in self.properties if isinstance(p, DateOther))
 
     @property
-    def editions(self) -> list[Edition]:
-        return [cast(Edition, p) for p in self.properties if isinstance(p, Edition)]
+    def editions(self) -> Generator[Edition, None, None]:
+        return (cast(Edition, p) for p in self.properties if isinstance(p, Edition))
 
     @property
-    def issuances(self) -> list[Issuance]:
-        return [cast(Issuance, p) for p in self.properties if isinstance(p, Issuance)]
+    def issuances(self) -> Generator[Issuance, None, None]:
+        return (cast(Issuance, p) for p in self.properties if isinstance(p, Issuance))
 
     @property
-    def frequencies(self) -> list[Frequency]:
-        return [cast(Frequency, p) for p in self.properties if isinstance(p, Frequency)]
+    def frequencies(self) -> Generator[Frequency, None, None]:
+        return (cast(Frequency, p) for p in self.properties if isinstance(p, Frequency))
 
 
 #  ____  _               _           _
