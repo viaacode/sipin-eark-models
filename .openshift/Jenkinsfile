@@ -37,7 +37,7 @@ pipeline {
                     docker.image("${BASE_IMAGE}").inside {
                         sh """#!/bin/bash
                         set -e
-                        pip3 install ".[test]"
+                        pip3 install ".[test]" --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
                         black --check eark_models/ tests/
                         flake8 --extend-ignore E tests/ eark_models/
                         """
@@ -57,7 +57,7 @@ pipeline {
                 script {
                     docker.image("${BASE_IMAGE}").inside {
                         sh """#!/bin/bash
-                        pip3 install ".[test]"
+                        pip3 install ".[test]" --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
                         pytest --junitxml tests/test_results.xml
                         """
                     }
@@ -78,7 +78,7 @@ pipeline {
                         docker.image("${BASE_IMAGE}").inside {
                             sh "sed -i 's/^version = .*/version = \"$PACKAGE_VERSION\"/' pyproject.toml"
                             sh """#!/bin/bash
-                            pip3 install --upgrade build
+                            pip3 install --upgrade build --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
                             python -m build
                             """
                         }
@@ -95,7 +95,7 @@ pipeline {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
                         docker.image("${BASE_IMAGE}").inside {
                             sh """#!/bin/bash
-                            pip3 install --upgrade twine
+                            pip3 install --upgrade twine --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
                             twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u $NEXUS_USERNAME -p $NEXUS_PASSWORD --non-interactive
                             """
                         }

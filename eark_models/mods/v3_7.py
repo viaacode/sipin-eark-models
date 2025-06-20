@@ -9,7 +9,7 @@
 #                   Metadata Object Description Schema.
 #                  See http://www.loc.gov/standards/mods/
 
-from typing import Literal, Any, Self, cast, TypedDict
+from typing import Literal, Any, Self, cast, TypedDict, Generator
 from pathlib import Path
 from enum import Enum
 from pydantic.dataclasses import dataclass
@@ -18,7 +18,11 @@ from xml.etree.ElementTree import Element
 from xml.etree import ElementTree
 
 from eark_models.utils import InvalidXMLError
-from eark_models.xlink import parse_simple_link
+from eark_models.xlink.v2 import parse_simple_link
+
+__all__ = [
+    "Mods",
+]
 
 ns = {
     "mods": "http://www.loc.gov/mods/v3",
@@ -30,12 +34,12 @@ class XML(str, Enum):
     lang = "{http://www.w3.org/XML/1998/namespace}lang"
 
 
-class ModsMeta(type):
+class _ModsMeta(type):
     def __getattr__(self, name: str) -> str:
         return "{http://www.loc.gov/mods/v3}" + name
 
 
-class _MODS(metaclass=ModsMeta): ...
+class _Mods(metaclass=_ModsMeta): ...
 
 
 AnyURI = str
@@ -505,8 +509,8 @@ class Language:
         if usage != "primary":
             raise ValueError()
 
-        lang_terms = root.iterfind(_MODS.languageTerm)
-        script_terms = root.iterfind(_MODS.scriptTerm)
+        lang_terms = root.iterfind(_Mods.languageTerm)
+        script_terms = root.iterfind(_Mods.scriptTerm)
 
         return cls(
             **parse_language_attributes(root),
@@ -869,110 +873,110 @@ class OriginInfo:
 
     # display_label: str | None
     # alt_rep_group: str | None
-    eventType: str | None
+    event_type: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         properties = [cls._parse_origin_property(el) for el in root]
         return cls(
             properties=properties,
-            eventType=root.attrib.get("eventType"),
+            event_type=root.attrib.get("eventType"),
             **parse_language_attributes(root),
         )
 
     @classmethod
     def _parse_origin_property(cls, root: Element) -> OriginInfoProperty:
         match root.tag:
-            case _MODS.place:
+            case _Mods.place:
                 return Place.from_xml_tree(root)
-            case _MODS.publisher:
+            case _Mods.publisher:
                 return Publisher.from_xml_tree(root)
-            case _MODS.dateIssued:
+            case _Mods.dateIssued:
                 return DateIssued.from_xml_tree(root)
-            case _MODS.dateCreated:
+            case _Mods.dateCreated:
                 return DateCreated.from_xml_tree(root)
-            case _MODS.dateCaptured:
+            case _Mods.dateCaptured:
                 return DateCaptured.from_xml_tree(root)
-            case _MODS.dateValid:
+            case _Mods.dateValid:
                 return DateValid.from_xml_tree(root)
-            case _MODS.dateModified:
+            case _Mods.dateModified:
                 return DateModified.from_xml_tree(root)
-            case _MODS.copyrightDate:
+            case _Mods.copyrightDate:
                 return CopyrightDate.from_xml_tree(root)
-            case _MODS.dateOther:
+            case _Mods.dateOther:
                 return DateOther.from_xml_tree(root)
-            case _MODS.edition:
+            case _Mods.edition:
                 return Edition.from_xml_tree(root)
-            case _MODS.issuance:
+            case _Mods.issuance:
                 return Issuance.from_xml_tree(root)
-            case _MODS.frequency:
+            case _Mods.frequency:
                 return Frequency.from_xml_tree(root)
             case _:
                 raise InvalidXMLError()
 
     @property
-    def places(self) -> list[Place]:
-        return [cast(Place, p) for p in self.properties if isinstance(p, Place)]
+    def places(self) -> Generator[Place, None, None]:
+        return (cast(Place, p) for p in self.properties if isinstance(p, Place))
 
     @property
-    def publishers(self) -> list[Publisher]:
-        return [cast(Publisher, p) for p in self.properties if isinstance(p, Publisher)]
+    def publishers(self) -> Generator[Publisher, None, None]:
+        return (cast(Publisher, p) for p in self.properties if isinstance(p, Publisher))
 
     @property
-    def datesIssued(self) -> list[DateIssued]:
-        return [
+    def dates_issued(self) -> Generator[DateIssued, None, None]:
+        return (
             cast(DateIssued, p) for p in self.properties if isinstance(p, DateIssued)
-        ]
+        )
 
     @property
-    def datesCreated(self) -> list[DateCreated]:
-        return [
+    def dates_created(self) -> Generator[DateCreated, None, None]:
+        return (
             cast(DateCreated, p) for p in self.properties if isinstance(p, DateCreated)
-        ]
+        )
 
     @property
-    def datesCaptured(self) -> list[DateCaptured]:
-        return [
+    def dates_captured(self) -> Generator[DateCaptured, None, None]:
+        return (
             cast(DateCaptured, p)
             for p in self.properties
             if isinstance(p, DateCaptured)
-        ]
+        )
 
     @property
-    def datesValid(self) -> list[DateValid]:
-        return [cast(DateValid, p) for p in self.properties if isinstance(p, DateValid)]
+    def dates_valid(self) -> Generator[DateValid, None, None]:
+        return (cast(DateValid, p) for p in self.properties if isinstance(p, DateValid))
 
     @property
-    def datesModified(self) -> list[DateModified]:
-        return [
+    def dates_modified(self) -> Generator[DateModified, None, None]:
+        return (
             cast(DateModified, p)
             for p in self.properties
             if isinstance(p, DateModified)
-        ]
+        )
 
     @property
-    def copyrightDates(self) -> list[CopyrightDate]:
-        return [
+    def copyright_dates(self) -> Generator[CopyrightDate, None, None]:
+        return (
             cast(CopyrightDate, p)
             for p in self.properties
             if isinstance(p, CopyrightDate)
-        ]
+        )
 
     @property
-    def datesOther(self) -> list[DateOther]:
-        return [cast(DateOther, p) for p in self.properties if isinstance(p, DateOther)]
+    def dates_other(self) -> Generator[DateOther, None, None]:
+        return (cast(DateOther, p) for p in self.properties if isinstance(p, DateOther))
 
     @property
-    def editions(self) -> list[Edition]:
-        return [cast(Edition, p) for p in self.properties if isinstance(p, Edition)]
+    def editions(self) -> Generator[Edition, None, None]:
+        return (cast(Edition, p) for p in self.properties if isinstance(p, Edition))
 
     @property
-    def issuances(self) -> list[Issuance]:
-        return [cast(Issuance, p) for p in self.properties if isinstance(p, Issuance)]
+    def issuances(self) -> Generator[Issuance, None, None]:
+        return (cast(Issuance, p) for p in self.properties if isinstance(p, Issuance))
 
     @property
-    def frequencies(self) -> list[Frequency]:
-        return [cast(Frequency, p) for p in self.properties if isinstance(p, Frequency)]
+    def frequencies(self) -> Generator[Frequency, None, None]:
+        return (cast(Frequency, p) for p in self.properties if isinstance(p, Frequency))
 
 
 #  ____  _               _           _
@@ -1132,17 +1136,17 @@ class PhysicalDescription:
     @classmethod
     def _parse_physical_property(cls, element: Element) -> PhysicalDescriptionProperty:
         match element.tag:
-            case _MODS.form:
+            case _Mods.form:
                 return Form.from_xml_tree(element)
-            case _MODS.reformattingQuality:
+            case _Mods.reformattingQuality:
                 return ReformattingQuality.from_xml_tree(element)
-            case _MODS.internetMediaType:
+            case _Mods.internetMediaType:
                 return InternetMediaType.from_xml_tree(element)
-            case _MODS.extent:
+            case _Mods.extent:
                 return Extent.from_xml_tree(element)
-            case _MODS.digitalOrigin:
+            case _Mods.digitalOrigin:
                 return DigitalOrigin.from_xml_tree(element)
-            case _MODS.note:
+            case _Mods.note:
                 return PhysicalDescriptionNote.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()
@@ -1209,7 +1213,7 @@ class RelatedItem:
             raise ValueError()
 
         return cls(
-            properties=[MODS._parse_mods_property(el) for el in root],
+            properties=[Mods._parse_mods_property(el) for el in root],
             type=type,
             other_type=root.attrib.get("otherType"),
             other_type_auth=root.attrib.get("otherTypeAuth"),
@@ -1387,25 +1391,25 @@ class Subject:
     @classmethod
     def _parse_subject_property(cls, element: Element) -> SubjectProperty:
         match element.tag:
-            case _MODS.topic:
+            case _Mods.topic:
                 return Topic.from_xml_tree(element)
-            case _MODS.geographic:
+            case _Mods.geographic:
                 return Geographic.from_xml_tree(element)
-            case _MODS.temporal:
+            case _Mods.temporal:
                 return Temporal.from_xml_tree(element)
-            case _MODS.titleInfo:
+            case _Mods.titleInfo:
                 return SubjectTitleInfo.from_xml_tree(element)
-            case _MODS.name:
+            case _Mods.name:
                 return SubjectName.from_xml_tree(element)
-            case _MODS.geographicCode:
+            case _Mods.geographicCode:
                 return GeographicCode.from_xml_tree(element)
-            case _MODS.hierarchicalGeographic:
+            case _Mods.hierarchicalGeographic:
                 return HierarchicalGeographic.from_xml_tree(element)
-            case _MODS.cartographics:
+            case _Mods.cartographics:
                 return Cartographics.from_xml_tree(element)
-            case _MODS.occupation:
+            case _Mods.occupation:
                 return Occupation.from_xml_tree(element)
-            case _MODS.genre:
+            case _Mods.genre:
                 return Genre.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()
@@ -1549,21 +1553,21 @@ class RecordInfo:
     @classmethod
     def _parse_record_info_property(cls, element: Element) -> RecordInfoProperty:
         match element.tag:
-            case _MODS.recordContentSource:
+            case _Mods.recordContentSource:
                 return RecordContentSource.from_xml_tree(element)
-            case _MODS.recordCreationDate:
+            case _Mods.recordCreationDate:
                 return RecordCreationDate.from_xml_tree(element)
-            case _MODS.recordChangeDate:
+            case _Mods.recordChangeDate:
                 return RecordChangeDate.from_xml_tree(element)
-            case _MODS.recordIdentifier:
+            case _Mods.recordIdentifier:
                 return RecordIdentifier.from_xml_tree(element)
-            case _MODS.languageOfCataloging:
+            case _Mods.languageOfCataloging:
                 return LanguageOfCataloging.from_xml_tree(element)
-            case _MODS.recordOrigin:
+            case _Mods.recordOrigin:
                 return RecordOrigin.from_xml_tree(element)
-            case _MODS.descriptionStandard:
+            case _Mods.descriptionStandard:
                 return DescriptionStandard.from_xml_tree(element)
-            case _MODS.recordInfoNote:
+            case _Mods.recordInfoNote:
                 return RecordInfoNote.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()
@@ -1792,7 +1796,7 @@ class TitleInfo:
     alt_format: AnyURI | None
     content_type: str | None
 
-    nameTitleGroup: str | None
+    name_title_group: str | None
     usage: Literal["primary"]
     id: ID | None
 
@@ -1849,7 +1853,7 @@ class TitleInfo:
             supplied=supplied,
             alt_rep_group=root.attrib.get("alt_rep_group"),
             **parse_alt_format_attributes(root),
-            nameTitleGroup=root.attrib.get("nameTitleGroup"),
+            name_title_group=root.attrib.get("nameTitleGroup"),
             usage=usage,
             id=root.attrib.get("id"),
             **parse_authority_attributes(root),
@@ -1861,15 +1865,15 @@ class TitleInfo:
     @classmethod
     def _parse_title_info_property(cls, root: Element) -> TitleInfoProperty:
         match root.tag:
-            case _MODS.title:
+            case _Mods.title:
                 return Title.from_xml_tree(root)
-            case _MODS.subTitle:
+            case _Mods.subTitle:
                 return SubTitle.from_xml_tree(root)
-            case _MODS.partNumber:
+            case _Mods.partNumber:
                 return PartNumber.from_xml_tree(root)
-            case _MODS.partName:
+            case _Mods.partName:
                 return PartName.from_xml_tree(root)
-            case _MODS.nonSort:
+            case _Mods.nonSort:
                 return NonSort.from_xml_tree(root)
             case _:
                 raise InvalidXMLError()
@@ -1986,7 +1990,7 @@ ModsVersions = Literal[
 
 
 @dataclass
-class MODS:
+class Mods:
     properties: list[ModsProperty]
 
     # id: ID | None
@@ -2021,165 +2025,165 @@ class MODS:
     @classmethod
     def _parse_mods_property(cls, element: Element) -> ModsProperty:
         match element.tag:
-            case _MODS.abstract:
+            case _Mods.abstract:
                 return Abstract.from_xml_tree(element)
-            case _MODS.accessCondition:
+            case _Mods.accessCondition:
                 return AccessCondition.from_xml_tree(element)
-            case _MODS.classification:
+            case _Mods.classification:
                 return Classification.from_xml_tree(element)
-            case _MODS.extension:
+            case _Mods.extension:
                 return Extension.from_xml_tree(element)
-            case _MODS.genre:
+            case _Mods.genre:
                 return Genre.from_xml_tree(element)
-            case _MODS.identifier:
+            case _Mods.identifier:
                 return Identifier.from_xml_tree(element)
-            case _MODS.language:
+            case _Mods.language:
                 return Language.from_xml_tree(element)
-            case _MODS.location:
+            case _Mods.location:
                 return Location.from_xml_tree(element)
-            case _MODS.name:
+            case _Mods.name:
                 return Name.from_xml_tree(element)
-            case _MODS.note:
+            case _Mods.note:
                 return Note.from_xml_tree(element)
-            case _MODS.originInfo:
+            case _Mods.originInfo:
                 return OriginInfo.from_xml_tree(element)
-            case _MODS.part:
+            case _Mods.part:
                 return Part.from_xml_tree(element)
-            case _MODS.physicalDescription:
+            case _Mods.physicalDescription:
                 return PhysicalDescription.from_xml_tree(element)
-            case _MODS.recordInfo:
+            case _Mods.recordInfo:
                 return RecordInfo.from_xml_tree(element)
-            case _MODS.relatedItem:
+            case _Mods.relatedItem:
                 return RelatedItem.from_xml_tree(element)
-            case _MODS.subject:
+            case _Mods.subject:
                 return Subject.from_xml_tree(element)
-            case _MODS.tableOfContents:
+            case _Mods.tableOfContents:
                 return TableOfContents.from_xml_tree(element)
-            case _MODS.targetAudience:
+            case _Mods.targetAudience:
                 return TargetAudience.from_xml_tree(element)
-            case _MODS.titleInfo:
+            case _Mods.titleInfo:
                 return TitleInfo.from_xml_tree(element)
-            case _MODS.typeOfResource:
+            case _Mods.typeOfResource:
                 return TypeOfResource.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()
 
     @property
-    def abstracts(self) -> list[Abstract]:
-        return [cast(Abstract, p) for p in self.properties if isinstance(p, Abstract)]
+    def abstracts(self) -> Generator[Abstract, None, None]:
+        return (cast(Abstract, p) for p in self.properties if isinstance(p, Abstract))
 
     @property
-    def accessConditions(self) -> list[AccessCondition]:
-        return [
+    def access_conditions(self) -> Generator[AccessCondition, None, None]:
+        return (
             cast(AccessCondition, p)
             for p in self.properties
             if isinstance(p, AccessCondition)
-        ]
+        )
 
     @property
-    def classifications(self) -> list[Classification]:
-        return [
+    def classifications(self) -> Generator[Classification, None, None]:
+        return (
             cast(Classification, p)
             for p in self.properties
             if isinstance(p, Classification)
-        ]
+        )
 
     @property
-    def extensions(self) -> list[Extension]:
-        return [cast(Extension, p) for p in self.properties if isinstance(p, Extension)]
+    def extensions(self) -> Generator[Extension, None, None]:
+        return (cast(Extension, p) for p in self.properties if isinstance(p, Extension))
 
     @property
-    def genres(self) -> list[Genre]:
-        return [cast(Genre, p) for p in self.properties if isinstance(p, Genre)]
+    def genres(self) -> Generator[Genre, None, None]:
+        return (cast(Genre, p) for p in self.properties if isinstance(p, Genre))
 
     @property
-    def identifiers(self) -> list[Identifier]:
-        return [
+    def identifiers(self) -> Generator[Identifier, None, None]:
+        return (
             cast(Identifier, p) for p in self.properties if isinstance(p, Identifier)
-        ]
+        )
 
     @property
-    def languages(self) -> list[Language]:
-        return [cast(Language, p) for p in self.properties if isinstance(p, Language)]
+    def languages(self) -> Generator[Language, None, None]:
+        return (cast(Language, p) for p in self.properties if isinstance(p, Language))
 
     @property
-    def locations(self) -> list[Location]:
-        return [cast(Location, p) for p in self.properties if isinstance(p, Location)]
+    def locations(self) -> Generator[Location, None, None]:
+        return (cast(Location, p) for p in self.properties if isinstance(p, Location))
 
     @property
-    def names(self) -> list[Name]:
-        return [cast(Name, p) for p in self.properties if isinstance(p, Name)]
+    def names(self) -> Generator[Name, None, None]:
+        return (cast(Name, p) for p in self.properties if isinstance(p, Name))
 
     @property
-    def notes(self) -> list[Note]:
-        return [cast(Note, p) for p in self.properties if isinstance(p, Note)]
+    def notes(self) -> Generator[Note, None, None]:
+        return (cast(Note, p) for p in self.properties if isinstance(p, Note))
 
     @property
-    def originInfos(self) -> list[OriginInfo]:
-        return [
+    def origin_infos(self) -> Generator[OriginInfo, None, None]:
+        return (
             cast(OriginInfo, p) for p in self.properties if isinstance(p, OriginInfo)
-        ]
+        )
 
     @property
-    def parts(self) -> list[Part]:
-        return [cast(Part, p) for p in self.properties if isinstance(p, Part)]
+    def parts(self) -> Generator[Part, None, None]:
+        return (cast(Part, p) for p in self.properties if isinstance(p, Part))
 
     @property
-    def physicalDescriptions(self) -> list[PhysicalDescription]:
-        return [
+    def physical_descriptions(self) -> Generator[PhysicalDescription, None, None]:
+        return (
             cast(PhysicalDescription, p)
             for p in self.properties
             if isinstance(p, PhysicalDescription)
-        ]
+        )
 
     @property
-    def recordInfos(self) -> list[RecordInfo]:
-        return [
+    def record_infos(self) -> Generator[RecordInfo, None, None]:
+        return (
             cast(RecordInfo, p) for p in self.properties if isinstance(p, RecordInfo)
-        ]
+        )
 
     @property
-    def relatedItems(self) -> list[RelatedItem]:
-        return [
+    def related_items(self) -> Generator[RelatedItem, None, None]:
+        return (
             cast(RelatedItem, p) for p in self.properties if isinstance(p, RelatedItem)
-        ]
+        )
 
     @property
-    def subjects(self) -> list[Subject]:
-        return [cast(Subject, p) for p in self.properties if isinstance(p, Subject)]
+    def subjects(self) -> Generator[Subject, None, None]:
+        return (cast(Subject, p) for p in self.properties if isinstance(p, Subject))
 
     @property
-    def tableOfContentss(self) -> list[TableOfContents]:
-        return [
+    def table_of_contents(self) -> Generator[TableOfContents, None, None]:
+        return (
             cast(TableOfContents, p)
             for p in self.properties
             if isinstance(p, TableOfContents)
-        ]
+        )
 
     @property
-    def targetAudiences(self) -> list[TargetAudience]:
-        return [
+    def target_audiences(self) -> Generator[TargetAudience, None, None]:
+        return (
             cast(TargetAudience, p)
             for p in self.properties
             if isinstance(p, TargetAudience)
-        ]
+        )
 
     @property
-    def titleInfos(self) -> list[TitleInfo]:
-        return [cast(TitleInfo, p) for p in self.properties if isinstance(p, TitleInfo)]
+    def title_infos(self) -> Generator[TitleInfo, None, None]:
+        return (cast(TitleInfo, p) for p in self.properties if isinstance(p, TitleInfo))
 
     @property
-    def typeOfResources(self) -> list[TypeOfResource]:
-        return [
+    def type_of_resources(self) -> Generator[TypeOfResource, None, None]:
+        return (
             cast(TypeOfResource, p)
             for p in self.properties
             if isinstance(p, TypeOfResource)
-        ]
+        )
 
 
 @dataclass
-class MODSCollection:
-    mods: list[MODS]
+class ModsCollection:
+    mods: list[Mods]
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:

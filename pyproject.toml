@@ -34,5 +34,7 @@ test = [
     "black==25.1.0",
 ]
 
-[tool.setuptools]
-packages = ["eark_models"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["eark_models*"]
+namespaces = false
