@@ -181,7 +181,7 @@ def parse_alt_format_attributes(element: Element) -> AltFormatAttributes:
 CodeOrText = Literal["code", "text"]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Date:
     text: str
 
@@ -244,7 +244,7 @@ class Date:
 # |_| \_\___/|_|\___|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RoleTerm:
     string_plus_language_plus_authority: StringPlusLanguagePlusAuthority
     type: CodeOrText | None
@@ -254,7 +254,7 @@ class RoleTerm:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Role:
     role_terms: list[RoleTerm]
 
@@ -270,7 +270,7 @@ class Role:
 # /_/   \_\_.__/|___/\__|_|  \__,_|\___|\__|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Abstract:
     text: str
 
@@ -324,7 +324,7 @@ class Abstract:
 # | |  _ / _ \ '_ \| '__/ _ \
 # | |_| |  __/ | | | | |  __/
 #  \____|\___|_| |_|_|  \___|
-@dataclass
+@dataclass(kw_only=True)
 class Genre:
     text: str
 
@@ -370,7 +370,7 @@ class Genre:
 # |___\__,_|\___|_| |_|\__|_|_| |_|\___|_|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Identifier:
     text: str
 
@@ -413,7 +413,7 @@ class Identifier:
 #                   |___/             |___/
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LanguageTerm:
     text: str
 
@@ -454,7 +454,7 @@ class LanguageTerm:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ScriptTerm:
     text: str
 
@@ -484,7 +484,7 @@ class ScriptTerm:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Language:
     language_term: list[LanguageTerm]
     script_term: list[ScriptTerm]
@@ -530,7 +530,7 @@ class Language:
 # |_| \_|\__,_|_| |_| |_|\___|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class NamePart:
     text: str
 
@@ -547,7 +547,7 @@ class NamePart:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DisplayForm:
     text: str
 
@@ -562,7 +562,7 @@ class DisplayForm:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Affiliation:
     text: str
 
@@ -577,7 +577,7 @@ class Affiliation:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Description:
     text: str
 
@@ -597,7 +597,7 @@ class Description:
 # 2. without `et. al`
 
 
-@dataclass
+@dataclass(kw_only=True)
 class NameNoEtal:
     options: list[
         NamePart
@@ -614,7 +614,7 @@ class NameNoEtal:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class NameEtal:
     # etal: ...
     # options: list[Affiliation | Role | Description]
@@ -625,7 +625,7 @@ class NameEtal:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Name:
     content: NameNoEtal | NameEtal
     type: Literal["personal", "corporate", "conference", "family"]
@@ -668,7 +668,7 @@ class Name:
 #               |___/
 
 
-@dataclass
+@dataclass(kw_only=True)
 class PlaceTerm:
     text: str
 
@@ -707,7 +707,7 @@ class PlaceTerm:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Place:
     terms: list[PlaceTerm]
     supplied: Literal["yes"]
@@ -726,7 +726,7 @@ class Place:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Publisher:
     text: str
 
@@ -752,70 +752,70 @@ class Publisher:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DateIssued(Date):
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
         return super().from_xml_tree(element)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DateCreated(Date):
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
         return super().from_xml_tree(element)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DateCaptured(Date):
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
         return super().from_xml_tree(element)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DateValid(Date):
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
         return super().from_xml_tree(element)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DateModified(Date):
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
         return super().from_xml_tree(element)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CopyrightDate(Date):
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
         return super().from_xml_tree(element)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DateOther:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Edition:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Frequency:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Issuance:
     value: Literal[
         "continuing",
@@ -861,7 +861,7 @@ OriginInfoProperty = (
 )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class OriginInfo:
     properties: list[OriginInfoProperty]
 
@@ -993,7 +993,7 @@ class OriginInfo:
 #                             |_|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Form:
     text: str
 
@@ -1018,7 +1018,7 @@ class Form:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Extent:
     text: str
 
@@ -1041,28 +1041,28 @@ class Extent:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ReformattingQuality:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class InternetMediaType:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DigitalOrigin:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class PhysicalDescriptionNote:
     text: str
 
@@ -1109,7 +1109,7 @@ PhysicalDescriptionProperty = (
 )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class PhysicalDescription:
     properties: list[PhysicalDescriptionProperty]
 
@@ -1159,7 +1159,7 @@ class PhysicalDescription:
 # |_| \_\___|_|\__,_|\__\___|\__,_| |_|\__\___|_| |_| |_|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RelatedItem:
     properties: list["ModsProperty"]
     type: (
@@ -1233,7 +1233,7 @@ class RelatedItem:
 #                 |__/
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Topic:
     text: str
 
@@ -1255,7 +1255,7 @@ class Topic:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Geographic:
     text: str
 
@@ -1277,49 +1277,49 @@ class Geographic:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Temporal:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SubjectTitleInfo:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SubjectName:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class GeographicCode:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class HierarchicalGeographic:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Cartographics:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Occupation:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
@@ -1340,7 +1340,7 @@ SubjectProperty = (
 )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Subject:
     properties: list[SubjectProperty]
     id: ID | None
@@ -1422,7 +1422,7 @@ class Subject:
 # |_| \_\___|\___\___/|_|  \__,_| |_|_| |_|_|  \___/
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RecordContentSource:
     text: str
 
@@ -1444,7 +1444,7 @@ class RecordContentSource:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RecordCreationDate:
     date: Date
 
@@ -1455,7 +1455,7 @@ class RecordCreationDate:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RecordChangeDate:
     date: Date
 
@@ -1466,7 +1466,7 @@ class RecordChangeDate:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RecordIdentifier:
     text: str
 
@@ -1486,28 +1486,28 @@ class RecordIdentifier:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LanguageOfCataloging:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RecordOrigin:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DescriptionStandard:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RecordInfoNote:
     note: "Note"
 
@@ -1528,7 +1528,7 @@ RecordInfoProperty = (
 )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RecordInfo:
     properties: list[RecordInfoProperty]
 
@@ -1580,49 +1580,49 @@ class RecordInfo:
 #  \___/ \__|_| |_|\___|_|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AccessCondition:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Classification:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Extension:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Location:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Part:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class TableOfContents:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         raise NotImplementedError()
 
 
-@dataclass
+@dataclass(kw_only=True)
 class TargetAudience:
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
@@ -1637,7 +1637,7 @@ class TargetAudience:
 #       |___/|_|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class TypeOfResource:
     text: str
 
@@ -1696,7 +1696,7 @@ class TypeOfResource:
 #   |_| |_|\__|_|\___| |_|_| |_|_|  \___/
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Title:
     text: str
 
@@ -1713,7 +1713,7 @@ class Title:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SubTitle:
     text: str
 
@@ -1730,7 +1730,7 @@ class SubTitle:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class PartNumber:
     text: str
 
@@ -1747,7 +1747,7 @@ class PartNumber:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class PartName:
     text: str
 
@@ -1764,7 +1764,7 @@ class PartName:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class NonSort:
     text: str
 
@@ -1784,7 +1784,7 @@ class NonSort:
 TitleInfoProperty = Title | SubTitle | PartNumber | PartName | NonSort
 
 
-@dataclass
+@dataclass(kw_only=True)
 class TitleInfo:
     properties: list[TitleInfoProperty]
     type: Literal["abbreviated", "translated", "alternative", "uniform"] | None
@@ -1908,7 +1908,7 @@ class TitleInfo:
 # |_| \_|\___/ \__\___|
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Note:
     text: str
 
@@ -1989,7 +1989,7 @@ ModsVersions = Literal[
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Mods:
     properties: list[ModsProperty]
 
@@ -2181,7 +2181,7 @@ class Mods:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ModsCollection:
     mods: list[Mods]
 

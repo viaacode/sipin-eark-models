@@ -21,7 +21,7 @@ class PremisMeta(type):
 class _Premis(metaclass=PremisMeta): ...
 
 
-@dataclass
+@dataclass(kw_only=True)
 class StringPlusAuthority:
     text: str
     authority: str | None
@@ -44,12 +44,12 @@ class StringPlusAuthority:
 ########## Object ##########
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ObjectIdentifierType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ObjectIdentifierValue:
     text: str
 
@@ -60,7 +60,7 @@ class ObjectIdentifierValue:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ObjectIdentifier:
     type: ObjectIdentifierType
     value: ObjectIdentifierValue
@@ -102,12 +102,12 @@ class ObjectIdentifier:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MessageDigestAlgorithm(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MessageDigest:
     text: str
 
@@ -118,7 +118,7 @@ class MessageDigest:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Fixity:
     message_digest_algorithm: MessageDigestAlgorithm
     message_digest: MessageDigest
@@ -145,27 +145,27 @@ class Fixity:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FormatName(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FormatRegistryName(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FormatRegistryKey(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FormatRegistryRole(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FormatVersion:
     text: str
 
@@ -176,7 +176,7 @@ class FormatVersion:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FormatDesignation:
     name: FormatName
     version: FormatVersion | None
@@ -197,7 +197,7 @@ class FormatDesignation:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FormatRegistry:
     name: FormatRegistryName
     key: FormatRegistryKey
@@ -225,7 +225,7 @@ class FormatRegistry:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FormatNote:
     text: str
 
@@ -236,7 +236,7 @@ class FormatNote:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Format:
     designation: FormatDesignation | None
     registry: FormatRegistry | None
@@ -265,7 +265,7 @@ class Format:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Size:
     value: int
 
@@ -276,7 +276,7 @@ class Size:
         return cls(value=int(element.text))
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ObjectCharacteristics:
     fixity: list[Fixity]
     size: Size | None
@@ -303,7 +303,7 @@ class ObjectCharacteristics:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class OriginalName:
     text: str
     simple_link: str | None
@@ -318,12 +318,12 @@ class OriginalName:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RelatedObjectIdentifierType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RelatedObjectIdentifierValue:
     text: str
 
@@ -334,7 +334,7 @@ class RelatedObjectIdentifierValue:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RelatedObjectIdentifier:
     type: RelatedObjectIdentifierType
     value: RelatedObjectIdentifierValue
@@ -357,17 +357,17 @@ class RelatedObjectIdentifier:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RelationshipType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class RelationshipSubType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Relationship:
     type: RelationshipType
     sub_type: RelationshipSubType
@@ -405,12 +405,12 @@ class Relationship:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SignificantPropertiesType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SignificantPropertiesValue:
     text: str
 
@@ -421,7 +421,7 @@ class SignificantPropertiesValue:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SignificantProperties:
     __pydantic_config__ = ConfigDict(arbitrary_types_allowed=True)
 
@@ -458,12 +458,12 @@ class SignificantProperties:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ContentLocationType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ContentLocationValue:
     text: str
 
@@ -474,7 +474,7 @@ class ContentLocationValue:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ContentLocation:
     type: ContentLocationType
     value: ContentLocationValue
@@ -495,12 +495,12 @@ class ContentLocation:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class StorageMedium(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Storage:
     content_location: ContentLocation | None
     storage_medium: StorageMedium | None
@@ -523,7 +523,7 @@ class Storage:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class File:
     xsi_type: Literal["premis:file"]
     identifiers: list[ObjectIdentifier]
@@ -583,7 +583,7 @@ class File:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Representation:
     xsi_type: Literal["premis:representation"]
     identifiers: list[ObjectIdentifier]
@@ -636,7 +636,7 @@ class Representation:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Bitstream:
     xsi_type: Literal["premis:bitstream"]
 
@@ -688,7 +688,7 @@ class Bitstream:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class IntellectualEntity:
     xsi_type: Literal["premis:intellectualEntity"]
 
@@ -753,12 +753,12 @@ Object = File | Representation | IntellectualEntity | Bitstream
 ########## Agent ##########
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AgentIdentifierType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AgentIdentifierValue:
     text: str
 
@@ -769,7 +769,7 @@ class AgentIdentifierValue:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AgentIdentifier:
     type: AgentIdentifierType
     value: AgentIdentifierValue
@@ -796,17 +796,17 @@ class AgentIdentifier:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AgentName(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AgentType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Agent:
     identifiers: list[AgentIdentifier]
     name: AgentName
@@ -856,12 +856,12 @@ class Agent:
 ########## Event ##########
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventIdentifierType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventIdentifierValue:
     text: str
 
@@ -872,7 +872,7 @@ class EventIdentifierValue:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventIdentifier:
     type: EventIdentifierType
     value: EventIdentifierValue
@@ -893,7 +893,7 @@ class EventIdentifier:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventDetail:
     text: str
 
@@ -904,7 +904,7 @@ class EventDetail:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventDetailInformation:
     detail: EventDetail | None
     # detail_extension: list[EventDetailExtension] = element(default_factory=list)
@@ -921,7 +921,7 @@ class EventDetailInformation:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventOutcomeDetailNote:
     text: str
 
@@ -932,7 +932,7 @@ class EventOutcomeDetailNote:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventOutcomeDetail:
     note: EventOutcomeDetailNote | None
     # extension: list[EventOutcomeExtension] = (default_factory=list)
@@ -949,12 +949,12 @@ class EventOutcomeDetail:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventOutcome(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventOutcomeInformation:
     outcome: EventOutcome | None
     outcome_detail: list[EventOutcomeDetail]
@@ -976,12 +976,12 @@ class EventOutcomeInformation:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LinkingAgentIdentifierType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LinkingAgentIdentifierValue:
     text: str
 
@@ -992,12 +992,12 @@ class LinkingAgentIdentifierValue:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LinkingAgentRole(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LinkingAgentIdentifier:
     type: LinkingAgentIdentifierType
     value: LinkingAgentIdentifierValue
@@ -1026,12 +1026,12 @@ class LinkingAgentIdentifier:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LinkingObjectIdentifierType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LinkingObjectIdentifierValue:
     text: str
 
@@ -1042,12 +1042,12 @@ class LinkingObjectIdentifierValue:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LinkingObjectRole(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LinkingObjectIdentifier:
     type: LinkingObjectIdentifierType
     value: LinkingObjectIdentifierValue
@@ -1075,12 +1075,12 @@ class LinkingObjectIdentifier:
         )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventType(StringPlusAuthority):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class EventDateTime:
     text: str
 
@@ -1091,7 +1091,7 @@ class EventDateTime:
         return cls(text=element.text)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Event:
     identifier: EventIdentifier
     type: EventType
@@ -1145,7 +1145,7 @@ class Event:
 ########## Premis ##########
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Premis:
     objects: list[Object]
     events: list[Event]
