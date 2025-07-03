@@ -301,7 +301,6 @@ class Abstract:
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
-
         shareable = root.attrib.get("shareable")
         if shareable is None:
             shareable = "no"
@@ -346,7 +345,6 @@ class Genre:
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
-
         usage = root.attrib.get("usage")
         if usage is None:
             usage = "primary"
@@ -430,7 +428,6 @@ class LanguageTerm:
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
-
         authority = root.attrib.get("authority")
         if authority is not None and authority not in (
             "rfc3066",
@@ -473,7 +470,6 @@ class ScriptTerm:
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
-
         type = root.attrib.get("type")
         if type is not None and type not in ("code", "text"):
             raise ValueError()
@@ -502,7 +498,6 @@ class Language:
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
-
         usage = root.attrib.get("usage")
         if usage is None:
             usage = "primary"
@@ -828,7 +823,6 @@ class Issuance:
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
-
         text = root.text
         if text is None or text not in (
             "continuing",
@@ -1660,7 +1654,6 @@ class TypeOfResource:
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
-
         collection = root.attrib.get("collection")
         if collection is None:
             collection = "yes"
@@ -1824,7 +1817,6 @@ class TitleInfo:
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
-
         type = root.attrib.get("type")
         if type is not None and type not in (
             "abbreviated",
