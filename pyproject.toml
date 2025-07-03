@@ -26,12 +26,13 @@ license-files = ["LICEN[CS]E*"]
 Repository = "https://github.com/viaacode/sipin-eark-models"
 
 [project.optional-dependencies]
-test = [
+dev = [
     "pytest==8.3.5",
     "xmlschema==4.0.1",
     "polyfactory==2.21.0",
-    "flake8==7.2.0",
-    "black==25.1.0",
+    "ruff==0.12.1",
+    "build==1.2.2.post1",
+    "twine==6.1.0",
 ]
 
 [tool.setuptools.packages.find]
