@@ -77,7 +77,7 @@ class StringPlusLanguagePlusSupplied(TypedDict):
     transliteration: str | None
 
     # Supplied attribute
-    supplied: Literal["yes"]
+    supplied: Literal["yes"] | None
 
 
 class StringPlusLanguagePlusAuthority(TypedDict):
@@ -133,9 +133,7 @@ def parse_string_plus_language_plus_supplied(
     element: Element,
 ) -> StringPlusLanguagePlusSupplied:
     supplied = element.attrib.get("supplied")
-    if supplied is None:
-        supplied = "yes"
-    if supplied != "yes":
+    if supplied is not None and supplied != "yes":
         raise ValueError()
     return {
         **parse_string_plus_language(element),
@@ -182,7 +180,7 @@ class Date:
     encoding: Literal["w3cdtf", "iso8601", "marc", "temper", "edtf"] | None
     qualifier: Literal["approximate", "inferred", "questionable"] | None
     point: Literal["start", "end"] | None
-    key_date: Literal["yes"]
+    key_date: Literal["yes"] | None
     calendar: str | None
 
     @classmethod
@@ -210,9 +208,7 @@ class Date:
             raise ValueError()
 
         key_date = element.attrib.get("key_date")
-        if key_date is None:
-            key_date = "yes"
-        if key_date != "yes":
+        if key_date is not None and key_date != "yes":
             raise ValueError()
 
         return cls(
@@ -329,15 +325,13 @@ class Genre:
     type: str | None
     display_label: str | None
     alt_rep_group: str | None
-    usage: Literal["primary"]
+    usage: Literal["primary"] | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         usage = root.attrib.get("usage")
-        if usage is None:
-            usage = "primary"
 
-        if usage != "primary":
+        if usage is not None and usage != "primary":
             raise ValueError()
 
         return cls(
@@ -369,16 +363,13 @@ class Identifier:
     display_label: str | None
     type: str | None
     type_uri: str | None
-    invalid: Literal["yes"]
+    invalid: Literal["yes"] | None
     alt_rep_group: str | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         invalid = root.attrib.get("invalid")
-        if invalid is None:
-            invalid = "yes"
-
-        if invalid != "yes":
+        if invalid is not None and invalid != "yes":
             raise ValueError()
 
         return cls(
@@ -482,14 +473,12 @@ class Language:
 
     display_label: str | None
     alt_rep_group: str | None
-    usage: Literal["primary"]
+    usage: Literal["primary"] | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         usage = root.attrib.get("usage")
-        if usage is None:
-            usage = "primary"
-        if usage != "primary":
+        if usage is not None and usage != "primary":
             raise ValueError()
 
         lang_terms = root.iterfind(ns.mods.languageTerm)
@@ -693,14 +682,12 @@ class PlaceTerm:
 @dataclass(kw_only=True)
 class Place:
     terms: list[PlaceTerm]
-    supplied: Literal["yes"]
+    supplied: Literal["yes"] | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         supplied = root.attrib.get("supplied")
-        if supplied is None:
-            supplied = "yes"
-        if supplied != "yes":
+        if supplied is not None and supplied != "yes":
             raise ValueError()
 
         return cls(
@@ -720,7 +707,7 @@ class Publisher:
     transliteration: str | None
 
     # Supplied attribute
-    supplied: Literal["yes"]
+    supplied: Literal["yes"] | None
 
     # Authority attributes
     authority: str | None
@@ -1011,7 +998,7 @@ class Extent:
     transliteration: str | None
 
     # Supplied attribute
-    supplied: Literal["yes"]
+    supplied: Literal["yes"] | None
 
     unit: AnySimpleType
 
@@ -1349,14 +1336,12 @@ class Subject:
 
     display_label: str | None
     alt_rep_group: str | None
-    usage: Literal["primary"]
+    usage: Literal["primary"] | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         usage = root.attrib.get("usage")
-        if usage is None:
-            usage = "primary"
-        if usage != "primary":
+        if usage is not None and usage != "primary":
             raise ValueError()
 
         return cls(
@@ -1634,30 +1619,24 @@ class TypeOfResource:
     authority_uri: AnyURI | None
     value_uri: AnyURI | None
 
-    collection: Literal["yes"]
-    manuscript: Literal["yes"]
+    collection: Literal["yes"] | None
+    manuscript: Literal["yes"] | None
     display_label: str | None
     alt_rep_group: str | None
-    usage: Literal["primary"]
+    usage: Literal["primary"] | None
 
     @classmethod
     def from_xml_tree(cls, root: Element) -> Self:
         collection = root.attrib.get("collection")
-        if collection is None:
-            collection = "yes"
-        if collection != "yes":
+        if collection is not None and collection != "yes":
             raise ValueError()
 
         manuscript = root.attrib.get("manuscript")
-        if manuscript is None:
-            manuscript = "yes"
-        if manuscript != "yes":
+        if manuscript is not None and manuscript != "yes":
             raise ValueError()
 
         usage = root.attrib.get("usage")
-        if usage is None:
-            usage = "primary"
-        if usage != "primary":
+        if usage is not None and usage != "primary":
             raise ValueError()
 
         return cls(
@@ -1770,7 +1749,7 @@ class TitleInfo:
     properties: list[TitleInfoProperty]
     type: Literal["abbreviated", "translated", "alternative", "uniform"] | None
     other_type: AnySimpleType | None
-    supplied: Literal["yes"]
+    supplied: Literal["yes"] | None
     alt_rep_group: str | None
 
     # Alternative_format_attributes
@@ -1778,7 +1757,7 @@ class TitleInfo:
     content_type: str | None
 
     name_title_group: str | None
-    usage: Literal["primary"]
+    usage: Literal["primary"] | None
     id: ID | None
 
     # Simple link attributes
@@ -1815,15 +1794,11 @@ class TitleInfo:
             raise ValueError()
 
         supplied = root.attrib.get("supplied")
-        if supplied is None:
-            supplied = "yes"
-        if supplied != "yes":
+        if supplied is not None and supplied != "yes":
             raise ValueError()
 
         usage = root.attrib.get("usage")
-        if usage is None:
-            usage = "primary"
-        if usage != "primary":
+        if usage is not None and usage != "primary":
             raise ValueError()
 
         return cls(

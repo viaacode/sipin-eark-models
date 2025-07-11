@@ -2,13 +2,14 @@ from typing import Literal, Self
 from pathlib import Path
 from itertools import chain
 from xml.etree.ElementTree import Element
-import xml.etree.ElementTree as ET
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from eark_models.utils import parse_xml_tree
 import eark_models.namespaces as ns
+
+AnyURI = str
 
 
 @dataclass(kw_only=True)
@@ -54,7 +55,7 @@ class ObjectIdentifierValue:
 class ObjectIdentifier:
     type: ObjectIdentifierType
     value: ObjectIdentifierValue
-    simple_link: str | None
+    simple_link: AnyURI | None
 
     @property
     def is_uuid(self):
@@ -192,7 +193,7 @@ class FormatRegistry:
     name: FormatRegistryName
     key: FormatRegistryKey
     role: FormatRegistryRole | None
-    simple_link: str | None
+    simple_link: AnyURI | None
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
@@ -257,13 +258,13 @@ class Format:
 
 @dataclass(kw_only=True)
 class Size:
-    value: int
+    value: str
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
         if element.text is None:
             raise ValueError("Size element has no text")
-        return cls(value=int(element.text))
+        return cls(value=element.text)
 
 
 @dataclass(kw_only=True)
@@ -296,7 +297,7 @@ class ObjectCharacteristics:
 @dataclass(kw_only=True)
 class OriginalName:
     text: str
-    simple_link: str | None
+    simple_link: AnyURI | None
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
@@ -330,7 +331,7 @@ class RelatedObjectIdentifier:
     value: RelatedObjectIdentifierValue
     # sequence: ... | None
     # RelObjectXmlID
-    simple_link: str | None
+    simple_link: AnyURI | None
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
@@ -343,6 +344,45 @@ class RelatedObjectIdentifier:
         return cls(
             type=RelatedObjectIdentifierType.from_xml_tree(type_elem),
             value=RelatedObjectIdentifierValue.from_xml_tree(value_elem),
+            simple_link=element.get("simpleLink"),
+        )
+
+
+@dataclass(kw_only=True)
+class RelatedEventIdentifierType(StringPlusAuthority):
+    pass
+
+
+@dataclass(kw_only=True)
+class RelatedEventIdentifierValue:
+    text: str
+
+    @classmethod
+    def from_xml_tree(cls, element: Element) -> Self:
+        if element.text is None:
+            return cls(text="")
+        return cls(text=element.text)
+
+
+@dataclass(kw_only=True)
+class RelatedEventIdentifier:
+    type: RelatedEventIdentifierType
+    value: RelatedEventIdentifierValue
+    # sequence: RelatedEventSequence
+    # RelEventXmlID: IDRef
+    simple_link: AnyURI | None
+
+    @classmethod
+    def from_xml_tree(cls, element: Element) -> Self:
+        type_elem = element.find(ns.premis.relatedEventIdentifierType)
+        if type_elem is None:
+            raise ValueError("Missing relatedEventIdentifierType")
+        value_elem = element.find(ns.premis.relatedEventIdentifierValue)
+        if value_elem is None:
+            raise ValueError("Missing relatedEventIdentifierValue")
+        return cls(
+            type=RelatedEventIdentifierType.from_xml_tree(type_elem),
+            value=RelatedEventIdentifierValue.from_xml_tree(value_elem),
             simple_link=element.get("simpleLink"),
         )
 
@@ -362,7 +402,9 @@ class Relationship:
     type: RelationshipType
     sub_type: RelationshipSubType
     related_object_identifier: list[RelatedObjectIdentifier]
-    # related_event_identifier: list[...] = element(default_factory=list)
+    related_event_identifier: list[RelatedEventIdentifier]
+
+    # TODO
     # related_environment_purpose: list[...] = element(default_factory=list)
     # related_environment_characteristic: list[...] | None = element(default=None)
 
@@ -384,14 +426,19 @@ class Relationship:
         sub_type_elem = element.find(ns.premis.relationshipSubType)
         if sub_type_elem is None:
             raise ValueError("Missing relationshipSubType")
-        related_obj_elems = element.findall(ns.premis.relatedObjectIdentifier)
-        related_object_identifier = [
-            RelatedObjectIdentifier.from_xml_tree(e) for e in related_obj_elems
+        related_object_elements = element.findall(ns.premis.relatedObjectIdentifier)
+        related_object_identifiers = [
+            RelatedObjectIdentifier.from_xml_tree(e) for e in related_object_elements
+        ]
+        related_event_elements = element.findall(ns.premis.relatedEventIdentifier)
+        related_event_identifiers = [
+            RelatedEventIdentifier.from_xml_tree(e) for e in related_event_elements
         ]
         return cls(
             type=RelationshipType.from_xml_tree(type_elem),
             sub_type=RelationshipSubType.from_xml_tree(sub_type_elem),
-            related_object_identifier=related_object_identifier,
+            related_object_identifier=related_object_identifiers,
+            related_event_identifier=related_event_identifiers,
         )
 
 
@@ -804,9 +851,12 @@ class AgentType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class Agent:
+    __pydantic_config__ = ConfigDict(arbitrary_types_allowed=True)
+
     identifiers: list[AgentIdentifier]
     name: AgentName
     type: AgentType
+    extension: list[Element]
 
     @property
     def uuid(self):
@@ -842,10 +892,21 @@ class Agent:
         type_elem = element.find(ns.premis.agentType)
         if type_elem is None:
             raise ValueError("Missing agentType")
+        extension = [
+            child
+            for child in element
+            if child.tag
+            not in {
+                ns.premis.agentIdentifier,
+                ns.premis.agentName,
+                ns.premis.agentType,
+            }
+        ]
         return cls(
             identifiers=identifiers,
             name=AgentName.from_xml_tree(name_elem),
             type=AgentType.from_xml_tree(type_elem),
+            extension=extension,
         )
 
 
@@ -902,18 +963,24 @@ class EventDetail:
 
 @dataclass(kw_only=True)
 class EventDetailInformation:
+    __pydantic_config__ = ConfigDict(arbitrary_types_allowed=True)
+
     detail: EventDetail | None
-    # detail_extension: list[EventDetailExtension] = element(default_factory=list)
+    extension: list[Element]
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
         detail_elem = element.find(ns.premis.eventDetail)
+        extension = [
+            child for child in element if child.tag not in {ns.premis.eventDetail}
+        ]
         return cls(
             detail=(
                 EventDetail.from_xml_tree(detail_elem)
                 if detail_elem is not None
                 else None
             ),
+            extension=extension,
         )
 
 
