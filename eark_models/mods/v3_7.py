@@ -19,27 +19,15 @@ from xml.etree import ElementTree
 
 from eark_models.utils import InvalidXMLError
 from eark_models.xlink.v2 import parse_simple_link
+import eark_models.namespaces as ns
 
 __all__ = [
     "Mods",
 ]
 
-ns = {
-    "mods": "http://www.loc.gov/mods/v3",
-    "xlink": "http://www.w3.org/1999/xlink",
-}
-
 
 class XML(str, Enum):
     lang = "{http://www.w3.org/XML/1998/namespace}lang"
-
-
-class _ModsMeta(type):
-    def __getattr__(self, name: str) -> str:
-        return "{http://www.loc.gov/mods/v3}" + name
-
-
-class _Mods(metaclass=_ModsMeta): ...
 
 
 AnyURI = str
@@ -504,8 +492,8 @@ class Language:
         if usage != "primary":
             raise ValueError()
 
-        lang_terms = root.iterfind(_Mods.languageTerm)
-        script_terms = root.iterfind(_Mods.scriptTerm)
+        lang_terms = root.iterfind(ns.mods.languageTerm)
+        script_terms = root.iterfind(ns.mods.scriptTerm)
 
         return cls(
             **parse_language_attributes(root),
@@ -881,29 +869,29 @@ class OriginInfo:
     @classmethod
     def _parse_origin_property(cls, root: Element) -> OriginInfoProperty:
         match root.tag:
-            case _Mods.place:
+            case ns.mods.place:
                 return Place.from_xml_tree(root)
-            case _Mods.publisher:
+            case ns.mods.publisher:
                 return Publisher.from_xml_tree(root)
-            case _Mods.dateIssued:
+            case ns.mods.dateIssued:
                 return DateIssued.from_xml_tree(root)
-            case _Mods.dateCreated:
+            case ns.mods.dateCreated:
                 return DateCreated.from_xml_tree(root)
-            case _Mods.dateCaptured:
+            case ns.mods.dateCaptured:
                 return DateCaptured.from_xml_tree(root)
-            case _Mods.dateValid:
+            case ns.mods.dateValid:
                 return DateValid.from_xml_tree(root)
-            case _Mods.dateModified:
+            case ns.mods.dateModified:
                 return DateModified.from_xml_tree(root)
-            case _Mods.copyrightDate:
+            case ns.mods.copyrightDate:
                 return CopyrightDate.from_xml_tree(root)
-            case _Mods.dateOther:
+            case ns.mods.dateOther:
                 return DateOther.from_xml_tree(root)
-            case _Mods.edition:
+            case ns.mods.edition:
                 return Edition.from_xml_tree(root)
-            case _Mods.issuance:
+            case ns.mods.issuance:
                 return Issuance.from_xml_tree(root)
-            case _Mods.frequency:
+            case ns.mods.frequency:
                 return Frequency.from_xml_tree(root)
             case _:
                 raise InvalidXMLError()
@@ -1130,17 +1118,17 @@ class PhysicalDescription:
     @classmethod
     def _parse_physical_property(cls, element: Element) -> PhysicalDescriptionProperty:
         match element.tag:
-            case _Mods.form:
+            case ns.mods.form:
                 return Form.from_xml_tree(element)
-            case _Mods.reformattingQuality:
+            case ns.mods.reformattingQuality:
                 return ReformattingQuality.from_xml_tree(element)
-            case _Mods.internetMediaType:
+            case ns.mods.internetMediaType:
                 return InternetMediaType.from_xml_tree(element)
-            case _Mods.extent:
+            case ns.mods.extent:
                 return Extent.from_xml_tree(element)
-            case _Mods.digitalOrigin:
+            case ns.mods.digitalOrigin:
                 return DigitalOrigin.from_xml_tree(element)
-            case _Mods.note:
+            case ns.mods.note:
                 return PhysicalDescriptionNote.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()
@@ -1385,25 +1373,25 @@ class Subject:
     @classmethod
     def _parse_subject_property(cls, element: Element) -> SubjectProperty:
         match element.tag:
-            case _Mods.topic:
+            case ns.mods.topic:
                 return Topic.from_xml_tree(element)
-            case _Mods.geographic:
+            case ns.mods.geographic:
                 return Geographic.from_xml_tree(element)
-            case _Mods.temporal:
+            case ns.mods.temporal:
                 return Temporal.from_xml_tree(element)
-            case _Mods.titleInfo:
+            case ns.mods.titleInfo:
                 return SubjectTitleInfo.from_xml_tree(element)
-            case _Mods.name:
+            case ns.mods.name:
                 return SubjectName.from_xml_tree(element)
-            case _Mods.geographicCode:
+            case ns.mods.geographicCode:
                 return GeographicCode.from_xml_tree(element)
-            case _Mods.hierarchicalGeographic:
+            case ns.mods.hierarchicalGeographic:
                 return HierarchicalGeographic.from_xml_tree(element)
-            case _Mods.cartographics:
+            case ns.mods.cartographics:
                 return Cartographics.from_xml_tree(element)
-            case _Mods.occupation:
+            case ns.mods.occupation:
                 return Occupation.from_xml_tree(element)
-            case _Mods.genre:
+            case ns.mods.genre:
                 return Genre.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()
@@ -1547,21 +1535,21 @@ class RecordInfo:
     @classmethod
     def _parse_record_info_property(cls, element: Element) -> RecordInfoProperty:
         match element.tag:
-            case _Mods.recordContentSource:
+            case ns.mods.recordContentSource:
                 return RecordContentSource.from_xml_tree(element)
-            case _Mods.recordCreationDate:
+            case ns.mods.recordCreationDate:
                 return RecordCreationDate.from_xml_tree(element)
-            case _Mods.recordChangeDate:
+            case ns.mods.recordChangeDate:
                 return RecordChangeDate.from_xml_tree(element)
-            case _Mods.recordIdentifier:
+            case ns.mods.recordIdentifier:
                 return RecordIdentifier.from_xml_tree(element)
-            case _Mods.languageOfCataloging:
+            case ns.mods.languageOfCataloging:
                 return LanguageOfCataloging.from_xml_tree(element)
-            case _Mods.recordOrigin:
+            case ns.mods.recordOrigin:
                 return RecordOrigin.from_xml_tree(element)
-            case _Mods.descriptionStandard:
+            case ns.mods.descriptionStandard:
                 return DescriptionStandard.from_xml_tree(element)
-            case _Mods.recordInfoNote:
+            case ns.mods.recordInfoNote:
                 return RecordInfoNote.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()
@@ -1857,15 +1845,15 @@ class TitleInfo:
     @classmethod
     def _parse_title_info_property(cls, root: Element) -> TitleInfoProperty:
         match root.tag:
-            case _Mods.title:
+            case ns.mods.title:
                 return Title.from_xml_tree(root)
-            case _Mods.subTitle:
+            case ns.mods.subTitle:
                 return SubTitle.from_xml_tree(root)
-            case _Mods.partNumber:
+            case ns.mods.partNumber:
                 return PartNumber.from_xml_tree(root)
-            case _Mods.partName:
+            case ns.mods.partName:
                 return PartName.from_xml_tree(root)
-            case _Mods.nonSort:
+            case ns.mods.nonSort:
                 return NonSort.from_xml_tree(root)
             case _:
                 raise InvalidXMLError()
@@ -2017,45 +2005,45 @@ class Mods:
     @classmethod
     def _parse_mods_property(cls, element: Element) -> ModsProperty:
         match element.tag:
-            case _Mods.abstract:
+            case ns.mods.abstract:
                 return Abstract.from_xml_tree(element)
-            case _Mods.accessCondition:
+            case ns.mods.accessCondition:
                 return AccessCondition.from_xml_tree(element)
-            case _Mods.classification:
+            case ns.mods.classification:
                 return Classification.from_xml_tree(element)
-            case _Mods.extension:
+            case ns.mods.extension:
                 return Extension.from_xml_tree(element)
-            case _Mods.genre:
+            case ns.mods.genre:
                 return Genre.from_xml_tree(element)
-            case _Mods.identifier:
+            case ns.mods.identifier:
                 return Identifier.from_xml_tree(element)
-            case _Mods.language:
+            case ns.mods.language:
                 return Language.from_xml_tree(element)
-            case _Mods.location:
+            case ns.mods.location:
                 return Location.from_xml_tree(element)
-            case _Mods.name:
+            case ns.mods.name:
                 return Name.from_xml_tree(element)
-            case _Mods.note:
+            case ns.mods.note:
                 return Note.from_xml_tree(element)
-            case _Mods.originInfo:
+            case ns.mods.originInfo:
                 return OriginInfo.from_xml_tree(element)
-            case _Mods.part:
+            case ns.mods.part:
                 return Part.from_xml_tree(element)
-            case _Mods.physicalDescription:
+            case ns.mods.physicalDescription:
                 return PhysicalDescription.from_xml_tree(element)
-            case _Mods.recordInfo:
+            case ns.mods.recordInfo:
                 return RecordInfo.from_xml_tree(element)
-            case _Mods.relatedItem:
+            case ns.mods.relatedItem:
                 return RelatedItem.from_xml_tree(element)
-            case _Mods.subject:
+            case ns.mods.subject:
                 return Subject.from_xml_tree(element)
-            case _Mods.tableOfContents:
+            case ns.mods.tableOfContents:
                 return TableOfContents.from_xml_tree(element)
-            case _Mods.targetAudience:
+            case ns.mods.targetAudience:
                 return TargetAudience.from_xml_tree(element)
-            case _Mods.titleInfo:
+            case ns.mods.titleInfo:
                 return TitleInfo.from_xml_tree(element)
-            case _Mods.typeOfResource:
+            case ns.mods.typeOfResource:
                 return TypeOfResource.from_xml_tree(element)
             case _:
                 raise InvalidXMLError()

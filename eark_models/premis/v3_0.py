@@ -7,18 +7,8 @@ import xml.etree.ElementTree as ET
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
-ns = {
-    "xsi": "http://www.w3.org/2001/XMLSchema-instance",
-    "premis": "http://www.loc.gov/premis/v3",
-}
-
-
-class PremisMeta(type):
-    def __getattr__(self, name: str) -> str:
-        return "{http://www.loc.gov/premis/v3}" + name
-
-
-class _Premis(metaclass=PremisMeta): ...
+from eark_models.utils import parse_xml_tree
+import eark_models.namespaces as ns
 
 
 @dataclass(kw_only=True)
@@ -88,10 +78,10 @@ class ObjectIdentifier:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type = element.find(_Premis.objectIdentifierType)
+        type = element.find(ns.premis.objectIdentifierType)
         if type is None:
             raise ValueError()
-        value = element.find(_Premis.objectIdentifierValue)
+        value = element.find(ns.premis.objectIdentifierValue)
         if value is None:
             raise ValueError()
 
@@ -126,13 +116,13 @@ class Fixity:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        algo_elem = element.find(_Premis.messageDigestAlgorithm)
+        algo_elem = element.find(ns.premis.messageDigestAlgorithm)
         if algo_elem is None:
             raise ValueError("Missing messageDigestAlgorithm")
-        digest_elem = element.find(_Premis.messageDigest)
+        digest_elem = element.find(ns.premis.messageDigest)
         if digest_elem is None:
             raise ValueError("Missing messageDigest")
-        originator_elem = element.find(_Premis.messageDigestOriginator)
+        originator_elem = element.find(ns.premis.messageDigestOriginator)
 
         return cls(
             message_digest_algorithm=MessageDigestAlgorithm.from_xml_tree(algo_elem),
@@ -183,10 +173,10 @@ class FormatDesignation:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        name_elem = element.find(_Premis.formatName)
+        name_elem = element.find(ns.premis.formatName)
         if name_elem is None:
             raise ValueError("Missing formatName")
-        version_elem = element.find(_Premis.formatVersion)
+        version_elem = element.find(ns.premis.formatVersion)
         return cls(
             name=FormatName.from_xml_tree(name_elem),
             version=(
@@ -206,13 +196,13 @@ class FormatRegistry:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        name_elem = element.find(_Premis.formatRegistryName)
+        name_elem = element.find(ns.premis.formatRegistryName)
         if name_elem is None:
             raise ValueError("Missing formatRegistryName")
-        key_elem = element.find(_Premis.formatRegistryKey)
+        key_elem = element.find(ns.premis.formatRegistryKey)
         if key_elem is None:
             raise ValueError("Missing formatRegistryKey")
-        role_elem = element.find(_Premis.formatRegistryRole)
+        role_elem = element.find(ns.premis.formatRegistryRole)
         return cls(
             name=FormatRegistryName.from_xml_tree(name_elem),
             key=FormatRegistryKey.from_xml_tree(key_elem),
@@ -244,11 +234,11 @@ class Format:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        designation_elem = element.find(_Premis.formatDesignation)
-        registry_elem = element.find(_Premis.formatRegistry)
+        designation_elem = element.find(ns.premis.formatDesignation)
+        registry_elem = element.find(ns.premis.formatRegistry)
         notes = [
             FormatNote.from_xml_tree(note_elem)
-            for note_elem in element.findall(_Premis.formatNote)
+            for note_elem in element.findall(ns.premis.formatNote)
         ]
         return cls(
             designation=(
@@ -289,12 +279,12 @@ class ObjectCharacteristics:
     def from_xml_tree(cls, element: Element) -> Self:
         fixities = [
             Fixity.from_xml_tree(fix_elem)
-            for fix_elem in element.findall(_Premis.fixity)
+            for fix_elem in element.findall(ns.premis.fixity)
         ]
-        size_elem = element.find(_Premis.size)
+        size_elem = element.find(ns.premis.size)
         formats = [
             Format.from_xml_tree(fmt_elem)
-            for fmt_elem in element.findall(_Premis.format)
+            for fmt_elem in element.findall(ns.premis.format)
         ]
         return cls(
             fixity=fixities,
@@ -344,10 +334,10 @@ class RelatedObjectIdentifier:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type_elem = element.find(_Premis.relatedObjectIdentifierType)
+        type_elem = element.find(ns.premis.relatedObjectIdentifierType)
         if type_elem is None:
             raise ValueError("Missing relatedObjectIdentifierType")
-        value_elem = element.find(_Premis.relatedObjectIdentifierValue)
+        value_elem = element.find(ns.premis.relatedObjectIdentifierValue)
         if value_elem is None:
             raise ValueError("Missing relatedObjectIdentifierValue")
         return cls(
@@ -388,13 +378,13 @@ class Relationship:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type_elem = element.find(_Premis.relationshipType)
+        type_elem = element.find(ns.premis.relationshipType)
         if type_elem is None:
             raise ValueError("Missing relationshipType")
-        sub_type_elem = element.find(_Premis.relationshipSubType)
+        sub_type_elem = element.find(ns.premis.relationshipSubType)
         if sub_type_elem is None:
             raise ValueError("Missing relationshipSubType")
-        related_obj_elems = element.findall(_Premis.relatedObjectIdentifier)
+        related_obj_elems = element.findall(ns.premis.relatedObjectIdentifier)
         related_object_identifier = [
             RelatedObjectIdentifier.from_xml_tree(e) for e in related_obj_elems
         ]
@@ -431,16 +421,16 @@ class SignificantProperties:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type_elem = element.find(_Premis.significantPropertiesType)
-        value_elem = element.find(_Premis.significantPropertiesValue)
+        type_elem = element.find(ns.premis.significantPropertiesType)
+        value_elem = element.find(ns.premis.significantPropertiesValue)
         # All children not type or value are considered extension
         extension = [
             child
             for child in element
             if child.tag
             not in {
-                _Premis.significantPropertiesType,
-                _Premis.significantPropertiesValue,
+                ns.premis.significantPropertiesType,
+                ns.premis.significantPropertiesValue,
             }
         ]
         return cls(
@@ -482,10 +472,10 @@ class ContentLocation:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type_elem = element.find(_Premis.contentLocationType)
+        type_elem = element.find(ns.premis.contentLocationType)
         if type_elem is None:
             raise ValueError("Missing contentLocationType")
-        value_elem = element.find(_Premis.contentLocationValue)
+        value_elem = element.find(ns.premis.contentLocationValue)
         if value_elem is None:
             raise ValueError("Missing contentLocationValue")
         return cls(
@@ -507,8 +497,8 @@ class Storage:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        content_location_elem = element.find(_Premis.contentLocation)
-        storage_medium_elem = element.find(_Premis.storageMedium)
+        content_location_elem = element.find(ns.premis.contentLocation)
+        storage_medium_elem = element.find(ns.premis.storageMedium)
         return cls(
             content_location=(
                 ContentLocation.from_xml_tree(content_location_elem)
@@ -525,7 +515,7 @@ class Storage:
 
 @dataclass(kw_only=True)
 class File:
-    xsi_type: Literal["premis:file"]
+    xsi_type: Literal["{http://www.loc.gov/premis/v3}file"]
     identifiers: list[ObjectIdentifier]
     # preservation_levels: list[PreservationLevel] = element(default_factory=list)
     significant_properties: list[SignificantProperties]
@@ -546,31 +536,33 @@ class File:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        # TODO: expand attribute qname
-        xsi_type = element.get("{http://www.w3.org/2001/XMLSchema-instance}type")
-        if xsi_type != "premis:file":
+        xsi_type = element.get(ns.xsi.type)
+        if xsi_type != "{http://www.loc.gov/premis/v3}file":
             raise ValueError()
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
-            for e in element.findall(_Premis.objectIdentifier)
+            for e in element.findall(ns.premis.objectIdentifier)
         ]
         significant_properties = [
             SignificantProperties.from_xml_tree(e)
-            for e in element.findall(_Premis.significantProperties)
+            for e in element.findall(ns.premis.significantProperties)
         ]
         characteristics = [
             ObjectCharacteristics.from_xml_tree(e)
-            for e in element.findall(_Premis.objectCharacteristics)
+            for e in element.findall(ns.premis.objectCharacteristics)
         ]
-        original_name_elem = element.find(_Premis.originalName)
+        original_name_elem = element.find(ns.premis.originalName)
         original_name = (
             OriginalName.from_xml_tree(original_name_elem)
             if original_name_elem is not None
             else None
         )
-        storages = [Storage.from_xml_tree(e) for e in element.findall(_Premis.storage)]
+        storages = [
+            Storage.from_xml_tree(e) for e in element.findall(ns.premis.storage)
+        ]
         relationships = [
-            Relationship.from_xml_tree(e) for e in element.findall(_Premis.relationship)
+            Relationship.from_xml_tree(e)
+            for e in element.findall(ns.premis.relationship)
         ]
         return cls(
             xsi_type=xsi_type,
@@ -585,7 +577,7 @@ class File:
 
 @dataclass(kw_only=True)
 class Representation:
-    xsi_type: Literal["premis:representation"]
+    xsi_type: Literal["{http://www.loc.gov/premis/v3}representation"]
     identifiers: list[ObjectIdentifier]
     # preservation_levels: list[PreservationLevel] = element(default_factory=list)
     significant_properties: list[SignificantProperties]
@@ -604,27 +596,29 @@ class Representation:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        # TODO: expand attribute qname
-        xsi_type = element.get("{http://www.w3.org/2001/XMLSchema-instance}type")
-        if xsi_type != "premis:representation":
+        xsi_type = element.get(ns.xsi.type)
+        if xsi_type != "{http://www.loc.gov/premis/v3}representation":
             raise ValueError()
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
-            for e in element.findall(_Premis.objectIdentifier)
+            for e in element.findall(ns.premis.objectIdentifier)
         ]
         significant_properties = [
             SignificantProperties.from_xml_tree(e)
-            for e in element.findall(_Premis.significantProperties)
+            for e in element.findall(ns.premis.significantProperties)
         ]
-        original_name_elem = element.find(_Premis.originalName)
+        original_name_elem = element.find(ns.premis.originalName)
         original_name = (
             OriginalName.from_xml_tree(original_name_elem)
             if original_name_elem is not None
             else None
         )
-        storages = [Storage.from_xml_tree(e) for e in element.findall(_Premis.storage)]
+        storages = [
+            Storage.from_xml_tree(e) for e in element.findall(ns.premis.storage)
+        ]
         relationships = [
-            Relationship.from_xml_tree(e) for e in element.findall(_Premis.relationship)
+            Relationship.from_xml_tree(e)
+            for e in element.findall(ns.premis.relationship)
         ]
         return cls(
             xsi_type=xsi_type,
@@ -638,7 +632,7 @@ class Representation:
 
 @dataclass(kw_only=True)
 class Bitstream:
-    xsi_type: Literal["premis:bitstream"]
+    xsi_type: Literal["{http://www.loc.gov/premis/v3}bitstream"]
 
     identifiers: list[ObjectIdentifier]
     significant_properties: list[SignificantProperties]
@@ -658,25 +652,27 @@ class Bitstream:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        # TODO: expand attribute qname
-        xsi_type = element.get("{http://www.w3.org/2001/XMLSchema-instance}type")
-        if xsi_type != "premis:bitstream":
+        xsi_type = element.get(ns.xsi.type)
+        if xsi_type != "{http://www.loc.gov/premis/v3}bitstream":
             raise ValueError()
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
-            for e in element.findall(_Premis.objectIdentifier)
+            for e in element.findall(ns.premis.objectIdentifier)
         ]
         significant_properties = [
             SignificantProperties.from_xml_tree(e)
-            for e in element.findall(_Premis.significantProperties)
+            for e in element.findall(ns.premis.significantProperties)
         ]
         characteristics = [
             ObjectCharacteristics.from_xml_tree(e)
-            for e in element.findall(_Premis.objectCharacteristics)
+            for e in element.findall(ns.premis.objectCharacteristics)
         ]
-        storages = [Storage.from_xml_tree(e) for e in element.findall(_Premis.storage)]
+        storages = [
+            Storage.from_xml_tree(e) for e in element.findall(ns.premis.storage)
+        ]
         relationships = [
-            Relationship.from_xml_tree(e) for e in element.findall(_Premis.relationship)
+            Relationship.from_xml_tree(e)
+            for e in element.findall(ns.premis.relationship)
         ]
         return cls(
             xsi_type=xsi_type,
@@ -690,7 +686,7 @@ class Bitstream:
 
 @dataclass(kw_only=True)
 class IntellectualEntity:
-    xsi_type: Literal["premis:intellectualEntity"]
+    xsi_type: Literal["{http://www.loc.gov/premis/v3}intellectualEntity"]
 
     identifiers: list[ObjectIdentifier]
     # preservation_levels: list[PreservationLevel] = element(default_factory=list)
@@ -717,26 +713,26 @@ class IntellectualEntity:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        # TODO: expand attribute qname
-        xsi_type = element.get("{http://www.w3.org/2001/XMLSchema-instance}type")
-        if xsi_type != "premis:intellectualEntity":
+        xsi_type = element.get(ns.xsi.type)
+        if xsi_type != "{http://www.loc.gov/premis/v3}intellectualEntity":
             raise ValueError()
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
-            for e in element.findall(_Premis.objectIdentifier)
+            for e in element.findall(ns.premis.objectIdentifier)
         ]
         significant_properties = [
             SignificantProperties.from_xml_tree(e)
-            for e in element.findall(_Premis.significantProperties)
+            for e in element.findall(ns.premis.significantProperties)
         ]
-        original_name_elem = element.find(_Premis.originalName)
+        original_name_elem = element.find(ns.premis.originalName)
         original_name = (
             OriginalName.from_xml_tree(original_name_elem)
             if original_name_elem is not None
             else None
         )
         relationships = [
-            Relationship.from_xml_tree(e) for e in element.findall(_Premis.relationship)
+            Relationship.from_xml_tree(e)
+            for e in element.findall(ns.premis.relationship)
         ]
         return cls(
             xsi_type=xsi_type,
@@ -784,10 +780,10 @@ class AgentIdentifier:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type_elem = element.find(_Premis.agentIdentifierType)
+        type_elem = element.find(ns.premis.agentIdentifierType)
         if type_elem is None:
             raise ValueError("Missing agentIdentifierType")
-        value_elem = element.find(_Premis.agentIdentifierValue)
+        value_elem = element.find(ns.premis.agentIdentifierValue)
         if value_elem is None:
             raise ValueError("Missing agentIdentifierValue")
         return cls(
@@ -838,12 +834,12 @@ class Agent:
     def from_xml_tree(cls, element: Element) -> Self:
         identifiers = [
             AgentIdentifier.from_xml_tree(e)
-            for e in element.findall(_Premis.agentIdentifier)
+            for e in element.findall(ns.premis.agentIdentifier)
         ]
-        name_elem = element.find(_Premis.agentName)
+        name_elem = element.find(ns.premis.agentName)
         if name_elem is None:
             raise ValueError("Missing agentName")
-        type_elem = element.find(_Premis.agentType)
+        type_elem = element.find(ns.premis.agentType)
         if type_elem is None:
             raise ValueError("Missing agentType")
         return cls(
@@ -880,10 +876,10 @@ class EventIdentifier:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type_elem = element.find(_Premis.eventIdentifierType)
+        type_elem = element.find(ns.premis.eventIdentifierType)
         if type_elem is None:
             raise ValueError("Missing eventIdentifierType")
-        value_elem = element.find(_Premis.eventIdentifierValue)
+        value_elem = element.find(ns.premis.eventIdentifierValue)
         if value_elem is None:
             raise ValueError("Missing eventIdentifierValue")
         return cls(
@@ -911,7 +907,7 @@ class EventDetailInformation:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        detail_elem = element.find(_Premis.eventDetail)
+        detail_elem = element.find(ns.premis.eventDetail)
         return cls(
             detail=(
                 EventDetail.from_xml_tree(detail_elem)
@@ -939,7 +935,7 @@ class EventOutcomeDetail:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        note_elem = element.find(_Premis.eventOutcomeDetailNote)
+        note_elem = element.find(ns.premis.eventOutcomeDetailNote)
         return cls(
             note=(
                 EventOutcomeDetailNote.from_xml_tree(note_elem)
@@ -961,10 +957,10 @@ class EventOutcomeInformation:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        outcome_elem = element.find(_Premis.eventOutcome)
+        outcome_elem = element.find(ns.premis.eventOutcome)
         outcome_details = [
             EventOutcomeDetail.from_xml_tree(e)
-            for e in element.findall(_Premis.eventOutcomeDetail)
+            for e in element.findall(ns.premis.eventOutcomeDetail)
         ]
         return cls(
             outcome=(
@@ -1008,15 +1004,15 @@ class LinkingAgentIdentifier:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type_elem = element.find(_Premis.linkingAgentIdentifierType)
+        type_elem = element.find(ns.premis.linkingAgentIdentifierType)
         if type_elem is None:
             raise ValueError("Missing linkingAgentIdentifierType")
-        value_elem = element.find(_Premis.linkingAgentIdentifierValue)
+        value_elem = element.find(ns.premis.linkingAgentIdentifierValue)
         if value_elem is None:
             raise ValueError("Missing linkingAgentIdentifierValue")
         roles = [
             LinkingAgentRole.from_xml_tree(e)
-            for e in element.findall(_Premis.linkingAgentRole)
+            for e in element.findall(ns.premis.linkingAgentRole)
         ]
         return cls(
             type=LinkingAgentIdentifierType.from_xml_tree(type_elem),
@@ -1057,15 +1053,15 @@ class LinkingObjectIdentifier:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        type_elem = element.find(_Premis.linkingObjectIdentifierType)
+        type_elem = element.find(ns.premis.linkingObjectIdentifierType)
         if type_elem is None:
             raise ValueError("Missing linkingObjectIdentifierType")
-        value_elem = element.find(_Premis.linkingObjectIdentifierValue)
+        value_elem = element.find(ns.premis.linkingObjectIdentifierValue)
         if value_elem is None:
             raise ValueError("Missing linkingObjectIdentifierValue")
         roles = [
             LinkingObjectRole.from_xml_tree(e)
-            for e in element.findall(_Premis.linkingObjectRole)
+            for e in element.findall(ns.premis.linkingObjectRole)
         ]
         return cls(
             type=LinkingObjectIdentifierType.from_xml_tree(type_elem),
@@ -1106,30 +1102,30 @@ class Event:
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
-        identifier_elem = element.find(_Premis.eventIdentifier)
+        identifier_elem = element.find(ns.premis.eventIdentifier)
         if identifier_elem is None:
             raise ValueError("Missing eventIdentifier")
-        type_elem = element.find(_Premis.eventType)
+        type_elem = element.find(ns.premis.eventType)
         if type_elem is None:
             raise ValueError("Missing eventType")
-        datetime_elem = element.find(_Premis.eventDateTime)
+        datetime_elem = element.find(ns.premis.eventDateTime)
         if datetime_elem is None:
             raise ValueError("Missing eventDateTime")
         detail_information = [
             EventDetailInformation.from_xml_tree(e)
-            for e in element.findall(_Premis.eventDetailInformation)
+            for e in element.findall(ns.premis.eventDetailInformation)
         ]
         outcome_information = [
             EventOutcomeInformation.from_xml_tree(e)
-            for e in element.findall(_Premis.eventOutcomeInformation)
+            for e in element.findall(ns.premis.eventOutcomeInformation)
         ]
         linking_agent_identifiers = [
             LinkingAgentIdentifier.from_xml_tree(e)
-            for e in element.findall(_Premis.linkingAgentIdentifier)
+            for e in element.findall(ns.premis.linkingAgentIdentifier)
         ]
         linking_object_identifiers = [
             LinkingObjectIdentifier.from_xml_tree(e)
-            for e in element.findall(_Premis.linkingObjectIdentifier)
+            for e in element.findall(ns.premis.linkingObjectIdentifier)
         ]
         return cls(
             identifier=EventIdentifier.from_xml_tree(identifier_elem),
@@ -1179,8 +1175,8 @@ class Premis:
 
     @classmethod
     def from_xml(cls, path: Path | str) -> Self:
-        root = ET.parse(path).getroot()
-        return cls.from_xml_tree(root)
+        tree = parse_xml_tree(path)
+        return cls.from_xml_tree(tree.getroot())
 
     @classmethod
     def from_xml_tree(cls, element: Element) -> Self:
@@ -1189,12 +1185,12 @@ class Premis:
             raise ValueError()
 
         events = [
-            Event.from_xml_tree(evt) for evt in element if evt.tag == _Premis.event
+            Event.from_xml_tree(evt) for evt in element if evt.tag == ns.premis.event
         ]
         agents = [
             Agent.from_xml_tree(agent)
             for agent in element
-            if agent.tag == _Premis.agent
+            if agent.tag == ns.premis.agent
         ]
 
         return cls(
@@ -1206,28 +1202,24 @@ class Premis:
 
     @staticmethod
     def _parse_objects(element: Element) -> list[Object]:
-        objects = [obj for obj in element if obj.tag == _Premis.object]
+        objects = [obj for obj in element if obj.tag == ns.premis.object]
 
-        # TODO: expand premis:... to its full URI
         files = (
             File.from_xml_tree(file)
             for file in objects
-            if file.get("{http://www.w3.org/2001/XMLSchema-instance}type")
-            == "premis:file"
+            if file.get(ns.xsi.type) == ns.premis.file
         )
 
         reprs = (
             Representation.from_xml_tree(repr)
             for repr in objects
-            if repr.get("{http://www.w3.org/2001/XMLSchema-instance}type")
-            == "premis:representation"
+            if repr.get(ns.xsi.type) == ns.premis.representation
         )
 
         entities = (
             IntellectualEntity.from_xml_tree(entity)
             for entity in objects
-            if entity.get("{http://www.w3.org/2001/XMLSchema-instance}type")
-            == "premis:intellectualEntity"
+            if entity.get(ns.xsi.type) == ns.premis.intellectualEntity
         )
 
         return list(chain(entities, reprs, files))
