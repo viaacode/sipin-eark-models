@@ -1241,7 +1241,7 @@ class Premis:
         return [obj for obj in self.objects if isinstance(obj, File)]
 
     @classmethod
-    def from_xml(cls, path: Path | str) -> Self:
+    def from_xml(cls, path: Path) -> Self:
         tree = parse_xml_tree(path)
         return cls.from_xml_tree(tree.getroot())
 

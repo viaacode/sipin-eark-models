@@ -1,6 +1,9 @@
-from typing import cast, TextIO
+from abc import ABC
+from typing import cast, TextIO, Self
 import xml.etree.ElementTree as ET
 from pathlib import Path
+
+from pydantic.dataclasses import dataclass
 
 
 from .namespaces import xsi
@@ -8,6 +11,12 @@ from .namespaces import xsi
 
 class InvalidXMLError(Exception):
     pass
+
+
+@dataclass
+class XMLBase(ABC):
+    @classmethod
+    def from_xml(cls, path: Path) -> Self: ...
 
 
 def expand_qname_attributes(
