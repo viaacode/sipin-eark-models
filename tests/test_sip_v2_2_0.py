@@ -5,11 +5,11 @@ import pytest
 from pydantic.dataclasses import dataclass
 
 from eark_models.sip.v2_2_0 import SIP
-from eark_models.utils import XMLBase
+from eark_models.utils import XMLParseable
 
 
 @dataclass
-class Dummy(XMLBase):
+class Dummy(XMLParseable):
     @classmethod
     def from_xml(cls, path: Path) -> Self:
         return cls()

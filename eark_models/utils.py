@@ -14,7 +14,7 @@ class InvalidXMLError(Exception):
 
 
 @dataclass
-class XMLBase(ABC):
+class XMLParseable(ABC):
     @classmethod
     def from_xml(cls, path: Path) -> Self: ...
 

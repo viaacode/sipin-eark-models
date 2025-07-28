@@ -5,11 +5,11 @@ from pydantic.dataclasses import dataclass
 
 from eark_models.premis.v3_0 import Premis
 from eark_models.mets.v1_12_1 import METS
-from eark_models.utils import XMLBase
+from eark_models.utils import XMLParseable
 
 
 @dataclass
-class PackageMetadata[T: XMLBase]:
+class PackageMetadata[T: XMLParseable]:
     descriptive: T
     preservation: Premis
 
@@ -35,7 +35,7 @@ class RepresentationMetadata:
 
 
 @dataclass
-class Representation[T: XMLBase]:
+class Representation[T: XMLParseable]:
     mets: METS
     metadata: RepresentationMetadata
     data: list[Path]
@@ -54,7 +54,7 @@ class Representation[T: XMLBase]:
 
 
 @dataclass
-class SIP[T: XMLBase]:
+class SIP[T: XMLParseable]:
     mets: METS
     metadata: PackageMetadata[T]
     representations: list[Representation[T]]
