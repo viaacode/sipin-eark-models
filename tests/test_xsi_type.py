@@ -2,6 +2,7 @@ from io import StringIO
 
 from eark_models.premis.v3_0 import Premis
 from eark_models.utils import parse_xml_tree
+from eark_models.etree import _Element
 
 
 def test_file_xsi_type_standard_prefix():
@@ -25,7 +26,7 @@ def test_file_xsi_type_standard_prefix():
 
     file = StringIO(content)
     root = parse_xml_tree(file).getroot()
-    premis = Premis.from_xml_tree(root)
+    premis = Premis.from_xml_tree(_Element(root, source="."))
 
     assert premis.objects[0].xsi_type == "{http://www.loc.gov/premis/v3}file"
 
@@ -51,6 +52,6 @@ def test_file_xsi_type_non_standard_prefix():
 
     file = StringIO(content)
     root = parse_xml_tree(file).getroot()
-    premis = Premis.from_xml_tree(root)
+    premis = Premis.from_xml_tree(_Element(root, source="."))
 
     assert premis.objects[0].xsi_type == "{http://www.loc.gov/premis/v3}file"

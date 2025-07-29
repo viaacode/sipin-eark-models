@@ -3,20 +3,23 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 
 import eark_models.namespaces as ns
+from eark_models.etree import _Element
 
 
 def count_object_contents(object_instance: object) -> Counter[Any]:
     counter = Counter[Any]()
 
     is_builtin = object_instance.__class__.__module__ == "builtins"
-    is_element = isinstance(object_instance, ET.Element)
+    is_element = isinstance(object_instance, (ET.Element, _Element))
     is_iterable = isinstance(object_instance, (list, tuple, set))
 
     if is_element:
         counter |= count_xml_contents(object_instance)
 
     elif not is_builtin and not is_element:
-        for _, field_value in object_instance.__dict__.items():
+        for field_name, field_value in object_instance.__dict__.items():
+            if field_name.startswith("__"):
+                continue
             counter |= count_object_contents(field_value)
 
     elif is_iterable:
@@ -29,7 +32,7 @@ def count_object_contents(object_instance: object) -> Counter[Any]:
     return counter
 
 
-def count_xml_contents(element: ET.Element) -> Counter[Any]:
+def count_xml_contents(element: ET.Element | _Element) -> Counter[Any]:
     counter = Counter[Any]()
 
     for k, v in element.attrib.items():
