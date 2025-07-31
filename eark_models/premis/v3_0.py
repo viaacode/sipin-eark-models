@@ -453,8 +453,8 @@ class Relationship:
 
     type: RelationshipType
     sub_type: RelationshipSubType
-    related_object_identifier: list[RelatedObjectIdentifier]
-    related_event_identifier: list[RelatedEventIdentifier]
+    related_object_identifiers: list[RelatedObjectIdentifier]
+    related_event_identifiers: list[RelatedEventIdentifier]
 
     # TODO
     # related_environment_purpose: list[...] = element(default_factory=list)
@@ -465,7 +465,7 @@ class Relationship:
         return next(
             (
                 id.value.text
-                for id in self.related_object_identifier
+                for id in self.related_object_identifiers
                 if id.type.text == "UUID"
             )
         )
@@ -490,8 +490,8 @@ class Relationship:
             __source__=element.__source__,
             type=RelationshipType.from_xml_tree(type_elem),
             sub_type=RelationshipSubType.from_xml_tree(sub_type_elem),
-            related_object_identifier=related_object_identifiers,
-            related_event_identifier=related_event_identifiers,
+            related_object_identifiers=related_object_identifiers,
+            related_event_identifiers=related_event_identifiers,
         )
 
 
