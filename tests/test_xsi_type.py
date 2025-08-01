@@ -25,8 +25,8 @@ def test_file_xsi_type_standard_prefix():
         </premis:premis>"""
 
     file = StringIO(content)
-    root = parse_xml_tree(file).getroot()
-    premis = Premis.from_xml_tree(_Element(root, source="."))
+    root = parse_xml_tree(file)
+    premis = Premis.from_xml_tree(root)
 
     assert premis.objects[0].xsi_type == "{http://www.loc.gov/premis/v3}file"
 
@@ -51,7 +51,7 @@ def test_file_xsi_type_non_standard_prefix():
         </premis3:premis>"""
 
     file = StringIO(content)
-    root = parse_xml_tree(file).getroot()
-    premis = Premis.from_xml_tree(_Element(root, source="."))
+    root = parse_xml_tree(file)
+    premis = Premis.from_xml_tree(root)
 
     assert premis.objects[0].xsi_type == "{http://www.loc.gov/premis/v3}file"

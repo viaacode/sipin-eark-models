@@ -7,9 +7,9 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from dataclasses import field
 
-from eark_models.utils import parse_xml_tree
-from eark_models.etree import _Element
-import eark_models.namespaces as ns
+from ..utils import InvalidXMLError, parse_xml_tree
+from ..etree import _Element
+from .. import namespaces as ns
 
 AnyURI = str
 
@@ -25,12 +25,10 @@ class StringPlusAuthority:
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
-        if element.text is None:
-            raise ValueError()
-
+        text = element.text if element.text is not None else ""
         return cls(
             __source__=element.__source__,
-            text=element.text,
+            text=text,
             authority=element.get("authority"),
             authority_uri=element.get("authorityURI"),
             value_uri=element.get("valueURI"),
@@ -53,9 +51,8 @@ class ObjectIdentifierValue:
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
-        if element.text is None:
-            return cls(__source__=element.__source__, text="")
-        return cls(__source__=element.__source__, text=element.text)
+        text = element.text if element.text is not None else ""
+        return cls(__source__=element.__source__, text=text)
 
 
 @dataclass(kw_only=True)
@@ -90,10 +87,10 @@ class ObjectIdentifier:
     def from_xml_tree(cls, element: _Element) -> Self:
         type = element.find(ns.premis.objectIdentifierType)
         if type is None:
-            raise ValueError()
+            raise InvalidXMLError()
         value = element.find(ns.premis.objectIdentifierValue)
         if value is None:
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             __source__=element.__source__,
@@ -133,10 +130,10 @@ class Fixity:
     def from_xml_tree(cls, element: _Element) -> Self:
         algo_elem = element.find(ns.premis.messageDigestAlgorithm)
         if algo_elem is None:
-            raise ValueError("Missing messageDigestAlgorithm")
+            raise InvalidXMLError("Missing messageDigestAlgorithm")
         digest_elem = element.find(ns.premis.messageDigest)
         if digest_elem is None:
-            raise ValueError("Missing messageDigest")
+            raise InvalidXMLError("Missing messageDigest")
         originator_elem = element.find(ns.premis.messageDigestOriginator)
 
         return cls(
@@ -195,7 +192,7 @@ class FormatDesignation:
     def from_xml_tree(cls, element: _Element) -> Self:
         name_elem = element.find(ns.premis.formatName)
         if name_elem is None:
-            raise ValueError("Missing formatName")
+            raise InvalidXMLError("Missing formatName")
         version_elem = element.find(ns.premis.formatVersion)
         return cls(
             __source__=element.__source__,
@@ -221,10 +218,10 @@ class FormatRegistry:
     def from_xml_tree(cls, element: _Element) -> Self:
         name_elem = element.find(ns.premis.formatRegistryName)
         if name_elem is None:
-            raise ValueError("Missing formatRegistryName")
+            raise InvalidXMLError("Missing formatRegistryName")
         key_elem = element.find(ns.premis.formatRegistryKey)
         if key_elem is None:
-            raise ValueError("Missing formatRegistryKey")
+            raise InvalidXMLError("Missing formatRegistryKey")
         role_elem = element.find(ns.premis.formatRegistryRole)
         return cls(
             __source__=element.__source__,
@@ -293,7 +290,7 @@ class Size:
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            raise ValueError("Size element has no text")
+            raise InvalidXMLError("Size element has no text")
         return cls(__source__=element.__source__, value=element.text)
 
 
@@ -381,10 +378,10 @@ class RelatedObjectIdentifier:
     def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.relatedObjectIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing relatedObjectIdentifierType")
+            raise InvalidXMLError("Missing relatedObjectIdentifierType")
         value_elem = element.find(ns.premis.relatedObjectIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing relatedObjectIdentifierValue")
+            raise InvalidXMLError("Missing relatedObjectIdentifierValue")
         return cls(
             __source__=element.__source__,
             type=RelatedObjectIdentifierType.from_xml_tree(type_elem),
@@ -425,10 +422,10 @@ class RelatedEventIdentifier:
     def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.relatedEventIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing relatedEventIdentifierType")
+            raise InvalidXMLError("Missing relatedEventIdentifierType")
         value_elem = element.find(ns.premis.relatedEventIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing relatedEventIdentifierValue")
+            raise InvalidXMLError("Missing relatedEventIdentifierValue")
         return cls(
             __source__=element.__source__,
             type=RelatedEventIdentifierType.from_xml_tree(type_elem),
@@ -474,10 +471,10 @@ class Relationship:
     def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.relationshipType)
         if type_elem is None:
-            raise ValueError("Missing relationshipType")
+            raise InvalidXMLError("Missing relationshipType")
         sub_type_elem = element.find(ns.premis.relationshipSubType)
         if sub_type_elem is None:
-            raise ValueError("Missing relationshipSubType")
+            raise InvalidXMLError("Missing relationshipSubType")
         related_object_elements = element.findall(ns.premis.relatedObjectIdentifier)
         related_object_identifiers = [
             RelatedObjectIdentifier.from_xml_tree(e) for e in related_object_elements
@@ -583,10 +580,10 @@ class ContentLocation:
     def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.contentLocationType)
         if type_elem is None:
-            raise ValueError("Missing contentLocationType")
+            raise InvalidXMLError("Missing contentLocationType")
         value_elem = element.find(ns.premis.contentLocationValue)
         if value_elem is None:
-            raise ValueError("Missing contentLocationValue")
+            raise InvalidXMLError("Missing contentLocationValue")
         return cls(
             __source__=element.__source__,
             type=ContentLocationType.from_xml_tree(type_elem),
@@ -653,7 +650,7 @@ class File:
     def from_xml_tree(cls, element: _Element) -> Self:
         xsi_type = element.get(ns.xsi.type)
         if xsi_type != "{http://www.loc.gov/premis/v3}file":
-            raise ValueError()
+            raise InvalidXMLError("Missing xsi:type='premis:file' attribute.")
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.objectIdentifier)
@@ -716,7 +713,7 @@ class Representation:
     def from_xml_tree(cls, element: _Element) -> Self:
         xsi_type = element.get(ns.xsi.type)
         if xsi_type != "{http://www.loc.gov/premis/v3}representation":
-            raise ValueError()
+            raise InvalidXMLError("Missing xsi:type='premis:representation' attribute.")
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.objectIdentifier)
@@ -775,7 +772,7 @@ class Bitstream:
     def from_xml_tree(cls, element: _Element) -> Self:
         xsi_type = element.get(ns.xsi.type)
         if xsi_type != "{http://www.loc.gov/premis/v3}bitstream":
-            raise ValueError()
+            raise InvalidXMLError("Missing xsi:type='premis:bitstream' attribute.")
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.objectIdentifier)
@@ -839,7 +836,9 @@ class IntellectualEntity:
     def from_xml_tree(cls, element: _Element) -> Self:
         xsi_type = element.get(ns.xsi.type)
         if xsi_type != "{http://www.loc.gov/premis/v3}intellectualEntity":
-            raise ValueError()
+            raise InvalidXMLError(
+                "Missing xsi:type='premis:intellectualEntity' attribute."
+            )
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.objectIdentifier)
@@ -911,10 +910,10 @@ class AgentIdentifier:
     def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.agentIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing agentIdentifierType")
+            raise InvalidXMLError("Missing agentIdentifierType")
         value_elem = element.find(ns.premis.agentIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing agentIdentifierValue")
+            raise InvalidXMLError("Missing agentIdentifierValue")
         return cls(
             __source__=element.__source__,
             type=AgentIdentifierType.from_xml_tree(type_elem),
@@ -973,10 +972,10 @@ class Agent:
         ]
         name_elem = element.find(ns.premis.agentName)
         if name_elem is None:
-            raise ValueError("Missing agentName")
+            raise InvalidXMLError("Missing agentName")
         type_elem = element.find(ns.premis.agentType)
         if type_elem is None:
-            raise ValueError("Missing agentType")
+            raise InvalidXMLError("Missing agentType")
         extension = [
             child
             for child in element
@@ -1029,10 +1028,10 @@ class EventIdentifier:
     def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.eventIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing eventIdentifierType")
+            raise InvalidXMLError("Missing eventIdentifierType")
         value_elem = element.find(ns.premis.eventIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing eventIdentifierValue")
+            raise InvalidXMLError("Missing eventIdentifierValue")
         return cls(
             __source__=element.__source__,
             type=EventIdentifierType.from_xml_tree(type_elem),
@@ -1181,10 +1180,10 @@ class LinkingAgentIdentifier:
     def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.linkingAgentIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing linkingAgentIdentifierType")
+            raise InvalidXMLError("Missing linkingAgentIdentifierType")
         value_elem = element.find(ns.premis.linkingAgentIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing linkingAgentIdentifierValue")
+            raise InvalidXMLError("Missing linkingAgentIdentifierValue")
         roles = [
             LinkingAgentRole.from_xml_tree(e)
             for e in element.findall(ns.premis.linkingAgentRole)
@@ -1235,10 +1234,10 @@ class LinkingObjectIdentifier:
     def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.linkingObjectIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing linkingObjectIdentifierType")
+            raise InvalidXMLError("Missing linkingObjectIdentifierType")
         value_elem = element.find(ns.premis.linkingObjectIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing linkingObjectIdentifierValue")
+            raise InvalidXMLError("Missing linkingObjectIdentifierValue")
         roles = [
             LinkingObjectRole.from_xml_tree(e)
             for e in element.findall(ns.premis.linkingObjectRole)
@@ -1289,13 +1288,13 @@ class Event:
     def from_xml_tree(cls, element: _Element) -> Self:
         identifier_elem = element.find(ns.premis.eventIdentifier)
         if identifier_elem is None:
-            raise ValueError("Missing eventIdentifier")
+            raise InvalidXMLError("Missing eventIdentifier")
         type_elem = element.find(ns.premis.eventType)
         if type_elem is None:
-            raise ValueError("Missing eventType")
+            raise InvalidXMLError("Missing eventType")
         datetime_elem = element.find(ns.premis.eventDateTime)
         if datetime_elem is None:
-            raise ValueError("Missing eventDateTime")
+            raise InvalidXMLError("Missing eventDateTime")
         detail_information = [
             EventDetailInformation.from_xml_tree(e)
             for e in element.findall(ns.premis.eventDetailInformation)
@@ -1363,15 +1362,14 @@ class Premis:
 
     @classmethod
     def from_xml(cls, path: Path) -> Self:
-        tree = parse_xml_tree(path)
-        element = _Element(tree.getroot(), source=str(path))
-        return cls.from_xml_tree(element)
+        root = parse_xml_tree(path)
+        return cls.from_xml_tree(root)
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
         version = element.get("version")
         if version != "3.0":
-            raise ValueError()
+            raise InvalidXMLError()
 
         events = [
             Event.from_xml_tree(evt) for evt in element if evt.tag == ns.premis.event

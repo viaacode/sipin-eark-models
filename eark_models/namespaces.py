@@ -19,3 +19,11 @@ class premis(Namespace):
 
 class mods(Namespace):
     __ns__ = "http://www.loc.gov/mods/v3"
+
+
+class schema(Namespace):
+    __ns__ = "https://schema.org/"
+
+
+class dcterms(Namespace):
+    __ns__ = "http://purl.org/dc/terms/"

@@ -25,6 +25,11 @@ class _Element:
         elements = self.element.findall(path, namespaces)
         return [_Element(el, source=self.__source__) for el in elements]
 
+    def findtext(
+        self, path: str, default: None = None, namespaces: dict[str, str] | None = None
+    ) -> str | None:
+        return self.element.findtext(path, default, namespaces)
+
     @property
     def text(self) -> str | None:
         return self.element.text
