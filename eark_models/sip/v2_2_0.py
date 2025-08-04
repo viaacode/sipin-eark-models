@@ -36,6 +36,7 @@ class RepresentationMetadata:
 
 @dataclass
 class Representation[T: XMLParseable]:
+    path: Path
     mets: METS
     metadata: RepresentationMetadata
     data: list[Path]
@@ -47,6 +48,7 @@ class Representation[T: XMLParseable]:
         data_paths = list(path.glob("data/*"))
 
         return cls(
+            path=path,
             mets=METS.from_xml(mets_path),
             metadata=RepresentationMetadata.from_path(metadata_path),
             data=data_paths,
@@ -55,6 +57,7 @@ class Representation[T: XMLParseable]:
 
 @dataclass
 class SIP[T: XMLParseable]:
+    unzipped_path: Path
     mets: METS
     metadata: PackageMetadata[T]
     representations: list[Representation[T]]
@@ -66,6 +69,7 @@ class SIP[T: XMLParseable]:
         representations_paths = unzipped_path.glob("representations/representation_*")
 
         return cls(
+            unzipped_path=unzipped_path,
             mets=METS.from_xml(mets_path),
             metadata=PackageMetadata.from_path(metadata_path, descriptive_cls),
             representations=[
