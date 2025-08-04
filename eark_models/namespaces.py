@@ -4,6 +4,9 @@ class NamespaceMeta(type):
     def __getattr__(cls, item: str) -> str:
         return "{" + cls.__ns__ + "}" + item
 
+    def __getitem__(cls, item: str) -> str:
+        return "{" + cls.__ns__ + "}" + item
+
 
 class Namespace(metaclass=NamespaceMeta):
     pass
