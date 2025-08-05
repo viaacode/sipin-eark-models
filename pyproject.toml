@@ -32,3 +32,6 @@ dev = [
     "build==1.2.2.post1",
     "twine==6.1.0",
 ]
+
+[tool.setuptools]
+packages = ["eark_models"]
