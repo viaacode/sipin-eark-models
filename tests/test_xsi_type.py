@@ -2,7 +2,6 @@ from io import StringIO
 
 from eark_models.premis.v3_0 import Premis
 from eark_models.utils import parse_xml_tree
-from eark_models.etree import _Element
 
 
 def test_file_xsi_type_standard_prefix():

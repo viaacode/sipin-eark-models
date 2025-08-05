@@ -198,7 +198,6 @@ class CreativeWorkSeries:
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
         position = element.findtext(schema.position)
-        has_part = element.find(schema.hasPart)
         xsi_type = element.get(xsi.type)
         if xsi_type != "{https://schema.org/}CreativeWorkSeries":
             raise InvalidXMLError()
