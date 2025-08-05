@@ -1,8 +1,6 @@
 pipeline {
     agent {
-        docker {
-            image "docker.io/library/python:3.12-bookworm"
-        }
+        dockerfile true
     }
     options {
         timeout(time: 45, unit: 'MINUTES')
