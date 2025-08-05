@@ -5,7 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sipin-eark-models"
 version = "0.0.1" # This version is replaced by the git tag version in the CI/CD
-dependencies = []
+dependencies = [
+    "pydantic==2.11.7"
+]
 authors = [
   { name="Luca Soto De Graeve", email="luca.sotodegraeve@meemoo.be" },
 ]
