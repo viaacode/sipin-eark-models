@@ -1,6 +1,8 @@
 pipeline {
     agent {
-        label 'node'
+        docker {
+            image "python:3.12-bookworm"
+        }
     }
     options {
         timeout(time: 45, unit: 'MINUTES')
@@ -11,7 +13,6 @@ pipeline {
         OC_URL = 'https://c113-e.private.eu-de.containers.cloud.ibm.com:30227'
         JIRA_URL = 'meemoo.atlassian.net'
         APP_NAME = 'eark_models'
-        BASE_IMAGE = 'python:3.12-bookworm'
     }
 
     stages {
@@ -33,16 +34,11 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    docker.image("${BASE_IMAGE}").inside {
-                        sh """#!/bin/bash
-                        set -e
-                        pip3 install ".[dev]" --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
-                        ruff format --check
-                        ruff check
-                        """
-                    }
-                }
+                sh """#!/bin/bash
+                pip3 install ".[dev]" --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
+                """
+                sh "ruff format --check"
+                sh "ruff check"
             }
         }
         stage('Run tests') {
@@ -54,14 +50,7 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    docker.image("${BASE_IMAGE}").inside {
-                        sh """#!/bin/bash
-                        pip3 install ".[dev]" --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
-                        pytest --junitxml tests/test_results.xml
-                        """
-                    }
-                }
+                sh "pytest --junitxml tests/test_results.xml"
             }
         }
         stage('Build Python package') {
@@ -74,14 +63,9 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
-                        // Since the version in pyproject is static, we tweak it here
-                        docker.image("${BASE_IMAGE}").inside {
-                            sh "sed -i 's/^version = .*/version = \"$PACKAGE_VERSION\"/' pyproject.toml"
-                            sh """#!/bin/bash
-                            pip3 install ".[dev]" --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
-                            python -m build
-                            """
-                        }
+                        // The version in pyproject.toml is set to the version derived from the tag `vX.Y.Z`
+                        sh "sed -i 's/^version = .*/version = \"$PACKAGE_VERSION\"/' pyproject.toml"
+                        sh "python -m build"
                     }
                 }
             }
@@ -93,12 +77,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
-                        docker.image("${BASE_IMAGE}").inside {
-                            sh """#!/bin/bash
-                            pip3 install ".[dev]" --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
-                            twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u $NEXUS_USERNAME -p $NEXUS_PASSWORD --non-interactive
-                            """
-                        }
+                        sh "twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u $NEXUS_USERNAME -p $NEXUS_PASSWORD --non-interactive"
                     }
                 }
             }
