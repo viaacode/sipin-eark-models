@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image "python:3.12-bookworm"
+            image "docker.io/library/python:3.12-bookworm"
         }
     }
     options {
@@ -12,7 +12,6 @@ pipeline {
         OC_PROJECT = 'python-libraries'
         OC_URL = 'https://c113-e.private.eu-de.containers.cloud.ibm.com:30227'
         JIRA_URL = 'meemoo.atlassian.net'
-        APP_NAME = 'eark_models'
     }
 
     stages {
