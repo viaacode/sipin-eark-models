@@ -18,6 +18,6 @@ def test_premis_example_parsing(premis_path: Path):
 
 @pytest.mark.parametrize("premis_path", premis_files)
 def test_premis_example_completeness(premis_path: Path):
-    root = parse_xml_tree(premis_path).getroot()
+    root = parse_xml_tree(premis_path)
     premis = Premis.from_xml(premis_path)
     assert count_object_contents(premis) == count_xml_contents(root)

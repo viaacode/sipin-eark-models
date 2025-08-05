@@ -18,6 +18,6 @@ def test_mods_example_parsing(mods_path: Path):
 
 @pytest.mark.parametrize("mods_path", mods_files)
 def test_mods_example_completeness(mods_path: Path):
-    root = parse_xml_tree(mods_path).getroot()
+    root = parse_xml_tree(mods_path)
     mods = Mods.from_xml(mods_path)
     assert count_object_contents(mods) == count_xml_contents(root)

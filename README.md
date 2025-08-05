@@ -6,10 +6,8 @@ Pydantic models for the E-ARK CSIP. Currently only includes PREMIS.
 Create a PREMIS pydantic model with
 
 ```py
-from lxml import etree
-from eark_models.premis import Premis
+from eark_models.premis.v3_0 import Premis
 
-root = etree.parse(PATH).getroot()
-premis = Premis.from_xml_tree(root)
+premis = Premis.from_xml("premis.xml")
 ```
 

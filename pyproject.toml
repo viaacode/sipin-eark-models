@@ -6,8 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "sipin-eark-models"
 version = "0.0.1" # This version is replaced by the git tag version in the CI/CD
 dependencies = [
-    "pydantic-xml==2.17.0",
-    "lxml==5.4.0",
+    "pydantic==2.11.7"
 ]
 authors = [
   { name="Luca Soto De Graeve", email="luca.sotodegraeve@meemoo.be" },
@@ -29,13 +28,7 @@ Repository = "https://github.com/viaacode/sipin-eark-models"
 dev = [
     "pytest==8.3.5",
     "xmlschema==4.0.1",
-    "polyfactory==2.21.0",
     "ruff==0.12.1",
     "build==1.2.2.post1",
     "twine==6.1.0",
 ]
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["eark_models*"]
-namespaces = false

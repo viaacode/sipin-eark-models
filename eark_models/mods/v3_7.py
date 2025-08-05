@@ -1952,7 +1952,7 @@ class Mods:
     version: ModsVersions | None
 
     @classmethod
-    def from_xml(cls, path: str | Path) -> Self:
+    def from_xml(cls, path: Path) -> Self:
         root = ElementTree.parse(path).getroot()
         return cls.from_xml_tree(root)
 

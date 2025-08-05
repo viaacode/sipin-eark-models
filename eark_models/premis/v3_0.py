@@ -1,31 +1,34 @@
 from typing import Literal, Self
 from pathlib import Path
 from itertools import chain
-from xml.etree.ElementTree import Element
+
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
+from dataclasses import field
 
-from eark_models.utils import parse_xml_tree
-import eark_models.namespaces as ns
+from ..utils import InvalidXMLError, parse_xml_tree
+from ..etree import _Element
+from .. import namespaces as ns
 
 AnyURI = str
 
 
 @dataclass(kw_only=True)
 class StringPlusAuthority:
+    __source__: str = field(compare=False)
+
     text: str
     authority: str | None
     authority_uri: str | None
     value_uri: str | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
-        if element.text is None:
-            raise ValueError()
-
+    def from_xml_tree(cls, element: _Element) -> Self:
+        text = element.text if element.text is not None else ""
         return cls(
-            text=element.text,
+            __source__=element.__source__,
+            text=text,
             authority=element.get("authority"),
             authority_uri=element.get("authorityURI"),
             value_uri=element.get("valueURI"),
@@ -42,17 +45,20 @@ class ObjectIdentifierType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class ObjectIdentifierValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
-        if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+    def from_xml_tree(cls, element: _Element) -> Self:
+        text = element.text if element.text is not None else ""
+        return cls(__source__=element.__source__, text=text)
 
 
 @dataclass(kw_only=True)
 class ObjectIdentifier:
+    __source__: str = field(compare=False)
+
     type: ObjectIdentifierType
     value: ObjectIdentifierValue
     simple_link: AnyURI | None
@@ -78,15 +84,16 @@ class ObjectIdentifier:
         )
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type = element.find(ns.premis.objectIdentifierType)
         if type is None:
-            raise ValueError()
+            raise InvalidXMLError()
         value = element.find(ns.premis.objectIdentifierValue)
         if value is None:
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
+            __source__=element.__source__,
             type=ObjectIdentifierType.from_xml_tree(type),
             value=ObjectIdentifierValue.from_xml_tree(value),
             simple_link=element.get("simpleLink"),
@@ -100,32 +107,37 @@ class MessageDigestAlgorithm(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class MessageDigest:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class Fixity:
+    __source__: str = field(compare=False)
+
     message_digest_algorithm: MessageDigestAlgorithm
     message_digest: MessageDigest
     message_digest_originator: StringPlusAuthority | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         algo_elem = element.find(ns.premis.messageDigestAlgorithm)
         if algo_elem is None:
-            raise ValueError("Missing messageDigestAlgorithm")
+            raise InvalidXMLError("Missing messageDigestAlgorithm")
         digest_elem = element.find(ns.premis.messageDigest)
         if digest_elem is None:
-            raise ValueError("Missing messageDigest")
+            raise InvalidXMLError("Missing messageDigest")
         originator_elem = element.find(ns.premis.messageDigestOriginator)
 
         return cls(
+            __source__=element.__source__,
             message_digest_algorithm=MessageDigestAlgorithm.from_xml_tree(algo_elem),
             message_digest=MessageDigest.from_xml_tree(digest_elem),
             message_digest_originator=(
@@ -158,27 +170,32 @@ class FormatRegistryRole(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class FormatVersion:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class FormatDesignation:
+    __source__: str = field(compare=False)
+
     name: FormatName
     version: FormatVersion | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         name_elem = element.find(ns.premis.formatName)
         if name_elem is None:
-            raise ValueError("Missing formatName")
+            raise InvalidXMLError("Missing formatName")
         version_elem = element.find(ns.premis.formatVersion)
         return cls(
+            __source__=element.__source__,
             name=FormatName.from_xml_tree(name_elem),
             version=(
                 FormatVersion.from_xml_tree(version_elem)
@@ -190,21 +207,24 @@ class FormatDesignation:
 
 @dataclass(kw_only=True)
 class FormatRegistry:
+    __source__: str = field(compare=False)
+
     name: FormatRegistryName
     key: FormatRegistryKey
     role: FormatRegistryRole | None
     simple_link: AnyURI | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         name_elem = element.find(ns.premis.formatRegistryName)
         if name_elem is None:
-            raise ValueError("Missing formatRegistryName")
+            raise InvalidXMLError("Missing formatRegistryName")
         key_elem = element.find(ns.premis.formatRegistryKey)
         if key_elem is None:
-            raise ValueError("Missing formatRegistryKey")
+            raise InvalidXMLError("Missing formatRegistryKey")
         role_elem = element.find(ns.premis.formatRegistryRole)
         return cls(
+            __source__=element.__source__,
             name=FormatRegistryName.from_xml_tree(name_elem),
             key=FormatRegistryKey.from_xml_tree(key_elem),
             role=(
@@ -218,23 +238,27 @@ class FormatRegistry:
 
 @dataclass(kw_only=True)
 class FormatNote:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class Format:
+    __source__: str = field(compare=False)
+
     designation: FormatDesignation | None
     registry: FormatRegistry | None
     note: list[FormatNote]
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         designation_elem = element.find(ns.premis.formatDesignation)
         registry_elem = element.find(ns.premis.formatRegistry)
         notes = [
@@ -242,6 +266,7 @@ class Format:
             for note_elem in element.findall(ns.premis.formatNote)
         ]
         return cls(
+            __source__=element.__source__,
             designation=(
                 FormatDesignation.from_xml_tree(designation_elem)
                 if designation_elem is not None
@@ -258,17 +283,21 @@ class Format:
 
 @dataclass(kw_only=True)
 class Size:
+    __source__: str = field(compare=False)
+
     value: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            raise ValueError("Size element has no text")
-        return cls(value=element.text)
+            raise InvalidXMLError("Size element has no text")
+        return cls(__source__=element.__source__, value=element.text)
 
 
 @dataclass(kw_only=True)
 class ObjectCharacteristics:
+    __source__: str = field(compare=False)
+
     fixity: list[Fixity]
     size: Size | None
     format: list[Format]
@@ -277,7 +306,7 @@ class ObjectCharacteristics:
     # object_characteristics_extension: ...
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         fixities = [
             Fixity.from_xml_tree(fix_elem)
             for fix_elem in element.findall(ns.premis.fixity)
@@ -288,6 +317,7 @@ class ObjectCharacteristics:
             for fmt_elem in element.findall(ns.premis.format)
         ]
         return cls(
+            __source__=element.__source__,
             fixity=fixities,
             size=Size.from_xml_tree(size_elem) if size_elem is not None else None,
             format=formats,
@@ -296,14 +326,21 @@ class ObjectCharacteristics:
 
 @dataclass(kw_only=True)
 class OriginalName:
+    __source__: str = field(compare=False)
+
     text: str
     simple_link: AnyURI | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="", simple_link=element.get("simpleLink"))
+            return cls(
+                __source__=element.__source__,
+                text="",
+                simple_link=element.get("simpleLink"),
+            )
         return cls(
+            __source__=element.__source__,
             text=element.text,
             simple_link=element.get("simpleLink"),
         )
@@ -316,17 +353,21 @@ class RelatedObjectIdentifierType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class RelatedObjectIdentifierValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class RelatedObjectIdentifier:
+    __source__: str = field(compare=False)
+
     type: RelatedObjectIdentifierType
     value: RelatedObjectIdentifierValue
     # sequence: ... | None
@@ -334,14 +375,15 @@ class RelatedObjectIdentifier:
     simple_link: AnyURI | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.relatedObjectIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing relatedObjectIdentifierType")
+            raise InvalidXMLError("Missing relatedObjectIdentifierType")
         value_elem = element.find(ns.premis.relatedObjectIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing relatedObjectIdentifierValue")
+            raise InvalidXMLError("Missing relatedObjectIdentifierValue")
         return cls(
+            __source__=element.__source__,
             type=RelatedObjectIdentifierType.from_xml_tree(type_elem),
             value=RelatedObjectIdentifierValue.from_xml_tree(value_elem),
             simple_link=element.get("simpleLink"),
@@ -355,17 +397,21 @@ class RelatedEventIdentifierType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class RelatedEventIdentifierValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class RelatedEventIdentifier:
+    __source__: str = field(compare=False)
+
     type: RelatedEventIdentifierType
     value: RelatedEventIdentifierValue
     # sequence: RelatedEventSequence
@@ -373,14 +419,15 @@ class RelatedEventIdentifier:
     simple_link: AnyURI | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.relatedEventIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing relatedEventIdentifierType")
+            raise InvalidXMLError("Missing relatedEventIdentifierType")
         value_elem = element.find(ns.premis.relatedEventIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing relatedEventIdentifierValue")
+            raise InvalidXMLError("Missing relatedEventIdentifierValue")
         return cls(
+            __source__=element.__source__,
             type=RelatedEventIdentifierType.from_xml_tree(type_elem),
             value=RelatedEventIdentifierValue.from_xml_tree(value_elem),
             simple_link=element.get("simpleLink"),
@@ -399,10 +446,12 @@ class RelationshipSubType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class Relationship:
+    __source__: str = field(compare=False)
+
     type: RelationshipType
     sub_type: RelationshipSubType
-    related_object_identifier: list[RelatedObjectIdentifier]
-    related_event_identifier: list[RelatedEventIdentifier]
+    related_object_identifiers: list[RelatedObjectIdentifier]
+    related_event_identifiers: list[RelatedEventIdentifier]
 
     # TODO
     # related_environment_purpose: list[...] = element(default_factory=list)
@@ -413,19 +462,19 @@ class Relationship:
         return next(
             (
                 id.value.text
-                for id in self.related_object_identifier
+                for id in self.related_object_identifiers
                 if id.type.text == "UUID"
             )
         )
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.relationshipType)
         if type_elem is None:
-            raise ValueError("Missing relationshipType")
+            raise InvalidXMLError("Missing relationshipType")
         sub_type_elem = element.find(ns.premis.relationshipSubType)
         if sub_type_elem is None:
-            raise ValueError("Missing relationshipSubType")
+            raise InvalidXMLError("Missing relationshipSubType")
         related_object_elements = element.findall(ns.premis.relatedObjectIdentifier)
         related_object_identifiers = [
             RelatedObjectIdentifier.from_xml_tree(e) for e in related_object_elements
@@ -435,10 +484,11 @@ class Relationship:
             RelatedEventIdentifier.from_xml_tree(e) for e in related_event_elements
         ]
         return cls(
+            __source__=element.__source__,
             type=RelationshipType.from_xml_tree(type_elem),
             sub_type=RelationshipSubType.from_xml_tree(sub_type_elem),
-            related_object_identifier=related_object_identifiers,
-            related_event_identifier=related_event_identifiers,
+            related_object_identifiers=related_object_identifiers,
+            related_event_identifiers=related_event_identifiers,
         )
 
 
@@ -449,25 +499,29 @@ class SignificantPropertiesType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class SignificantPropertiesValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class SignificantProperties:
+    __source__: str = field(compare=False)
+
     __pydantic_config__ = ConfigDict(arbitrary_types_allowed=True)
 
     type: SignificantPropertiesType | None
     value: SignificantPropertiesValue | None
-    extension: list[Element]
+    extension: list[_Element]
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.significantPropertiesType)
         value_elem = element.find(ns.premis.significantPropertiesValue)
         # All children not type or value are considered extension
@@ -481,6 +535,7 @@ class SignificantProperties:
             }
         ]
         return cls(
+            __source__=element.__source__,
             type=(
                 SignificantPropertiesType.from_xml_tree(type_elem)
                 if type_elem is not None
@@ -502,30 +557,35 @@ class ContentLocationType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class ContentLocationValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class ContentLocation:
+    __source__: str = field(compare=False)
+
     type: ContentLocationType
     value: ContentLocationValue
     simple_link: str | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.contentLocationType)
         if type_elem is None:
-            raise ValueError("Missing contentLocationType")
+            raise InvalidXMLError("Missing contentLocationType")
         value_elem = element.find(ns.premis.contentLocationValue)
         if value_elem is None:
-            raise ValueError("Missing contentLocationValue")
+            raise InvalidXMLError("Missing contentLocationValue")
         return cls(
+            __source__=element.__source__,
             type=ContentLocationType.from_xml_tree(type_elem),
             value=ContentLocationValue.from_xml_tree(value_elem),
             simple_link=element.get("simpleLink"),
@@ -539,14 +599,17 @@ class StorageMedium(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class Storage:
+    __source__: str = field(compare=False)
+
     content_location: ContentLocation | None
     storage_medium: StorageMedium | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         content_location_elem = element.find(ns.premis.contentLocation)
         storage_medium_elem = element.find(ns.premis.storageMedium)
         return cls(
+            __source__=element.__source__,
             content_location=(
                 ContentLocation.from_xml_tree(content_location_elem)
                 if content_location_elem is not None
@@ -562,6 +625,8 @@ class Storage:
 
 @dataclass(kw_only=True)
 class File:
+    __source__: str = field(compare=False)
+
     xsi_type: Literal["{http://www.loc.gov/premis/v3}file"]
     identifiers: list[ObjectIdentifier]
     # preservation_levels: list[PreservationLevel] = element(default_factory=list)
@@ -582,10 +647,10 @@ class File:
         return next((id for id in self.identifiers if id.is_uuid))
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         xsi_type = element.get(ns.xsi.type)
         if xsi_type != "{http://www.loc.gov/premis/v3}file":
-            raise ValueError()
+            raise InvalidXMLError("Missing xsi:type='premis:file' attribute.")
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.objectIdentifier)
@@ -612,6 +677,7 @@ class File:
             for e in element.findall(ns.premis.relationship)
         ]
         return cls(
+            __source__=element.__source__,
             xsi_type=xsi_type,
             identifiers=identifiers,
             significant_properties=significant_properties,
@@ -624,6 +690,8 @@ class File:
 
 @dataclass(kw_only=True)
 class Representation:
+    __source__: str = field(compare=False)
+
     xsi_type: Literal["{http://www.loc.gov/premis/v3}representation"]
     identifiers: list[ObjectIdentifier]
     # preservation_levels: list[PreservationLevel] = element(default_factory=list)
@@ -642,10 +710,10 @@ class Representation:
         return next((id for id in self.identifiers if id.is_uuid))
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         xsi_type = element.get(ns.xsi.type)
         if xsi_type != "{http://www.loc.gov/premis/v3}representation":
-            raise ValueError()
+            raise InvalidXMLError("Missing xsi:type='premis:representation' attribute.")
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.objectIdentifier)
@@ -668,6 +736,7 @@ class Representation:
             for e in element.findall(ns.premis.relationship)
         ]
         return cls(
+            __source__=element.__source__,
             xsi_type=xsi_type,
             identifiers=identifiers,
             significant_properties=significant_properties,
@@ -679,6 +748,8 @@ class Representation:
 
 @dataclass(kw_only=True)
 class Bitstream:
+    __source__: str = field(compare=False)
+
     xsi_type: Literal["{http://www.loc.gov/premis/v3}bitstream"]
 
     identifiers: list[ObjectIdentifier]
@@ -698,10 +769,10 @@ class Bitstream:
         return next((id for id in self.identifiers if id.is_uuid))
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         xsi_type = element.get(ns.xsi.type)
         if xsi_type != "{http://www.loc.gov/premis/v3}bitstream":
-            raise ValueError()
+            raise InvalidXMLError("Missing xsi:type='premis:bitstream' attribute.")
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.objectIdentifier)
@@ -722,6 +793,7 @@ class Bitstream:
             for e in element.findall(ns.premis.relationship)
         ]
         return cls(
+            __source__=element.__source__,
             xsi_type=xsi_type,
             identifiers=identifiers,
             significant_properties=significant_properties,
@@ -733,6 +805,8 @@ class Bitstream:
 
 @dataclass(kw_only=True)
 class IntellectualEntity:
+    __source__: str = field(compare=False)
+
     xsi_type: Literal["{http://www.loc.gov/premis/v3}intellectualEntity"]
 
     identifiers: list[ObjectIdentifier]
@@ -759,10 +833,12 @@ class IntellectualEntity:
         return next((id for id in self.identifiers if id.is_pid), None)
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         xsi_type = element.get(ns.xsi.type)
         if xsi_type != "{http://www.loc.gov/premis/v3}intellectualEntity":
-            raise ValueError()
+            raise InvalidXMLError(
+                "Missing xsi:type='premis:intellectualEntity' attribute."
+            )
         identifiers = [
             ObjectIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.objectIdentifier)
@@ -782,6 +858,7 @@ class IntellectualEntity:
             for e in element.findall(ns.premis.relationship)
         ]
         return cls(
+            __source__=element.__source__,
             xsi_type=xsi_type,
             identifiers=identifiers,
             significant_properties=significant_properties,
@@ -803,17 +880,21 @@ class AgentIdentifierType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class AgentIdentifierValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class AgentIdentifier:
+    __source__: str = field(compare=False)
+
     type: AgentIdentifierType
     value: AgentIdentifierValue
 
@@ -826,14 +907,15 @@ class AgentIdentifier:
         return self.type.text == "MEEMOO-OR-ID"
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.agentIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing agentIdentifierType")
+            raise InvalidXMLError("Missing agentIdentifierType")
         value_elem = element.find(ns.premis.agentIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing agentIdentifierValue")
+            raise InvalidXMLError("Missing agentIdentifierValue")
         return cls(
+            __source__=element.__source__,
             type=AgentIdentifierType.from_xml_tree(type_elem),
             value=AgentIdentifierValue.from_xml_tree(value_elem),
         )
@@ -851,12 +933,14 @@ class AgentType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class Agent:
+    __source__: str = field(compare=False)
+
     __pydantic_config__ = ConfigDict(arbitrary_types_allowed=True)
 
     identifiers: list[AgentIdentifier]
     name: AgentName
     type: AgentType
-    extension: list[Element]
+    extension: list[_Element]
 
     @property
     def uuid(self):
@@ -881,17 +965,17 @@ class Agent:
         return next((id for id in self.identifiers))
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         identifiers = [
             AgentIdentifier.from_xml_tree(e)
             for e in element.findall(ns.premis.agentIdentifier)
         ]
         name_elem = element.find(ns.premis.agentName)
         if name_elem is None:
-            raise ValueError("Missing agentName")
+            raise InvalidXMLError("Missing agentName")
         type_elem = element.find(ns.premis.agentType)
         if type_elem is None:
-            raise ValueError("Missing agentType")
+            raise InvalidXMLError("Missing agentType")
         extension = [
             child
             for child in element
@@ -903,6 +987,7 @@ class Agent:
             }
         ]
         return cls(
+            __source__=element.__source__,
             identifiers=identifiers,
             name=AgentName.from_xml_tree(name_elem),
             type=AgentType.from_xml_tree(type_elem),
@@ -920,30 +1005,35 @@ class EventIdentifierType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class EventIdentifierValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class EventIdentifier:
+    __source__: str = field(compare=False)
+
     type: EventIdentifierType
     value: EventIdentifierValue
     simple_link: str | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.eventIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing eventIdentifierType")
+            raise InvalidXMLError("Missing eventIdentifierType")
         value_elem = element.find(ns.premis.eventIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing eventIdentifierValue")
+            raise InvalidXMLError("Missing eventIdentifierValue")
         return cls(
+            __source__=element.__source__,
             type=EventIdentifierType.from_xml_tree(type_elem),
             value=EventIdentifierValue.from_xml_tree(value_elem),
             simple_link=element.get("simpleLink"),
@@ -952,29 +1042,34 @@ class EventIdentifier:
 
 @dataclass(kw_only=True)
 class EventDetail:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class EventDetailInformation:
+    __source__: str = field(compare=False)
+
     __pydantic_config__ = ConfigDict(arbitrary_types_allowed=True)
 
     detail: EventDetail | None
-    extension: list[Element]
+    extension: list[_Element]
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         detail_elem = element.find(ns.premis.eventDetail)
         extension = [
             child for child in element if child.tag not in {ns.premis.eventDetail}
         ]
         return cls(
+            __source__=element.__source__,
             detail=(
                 EventDetail.from_xml_tree(detail_elem)
                 if detail_elem is not None
@@ -986,24 +1081,29 @@ class EventDetailInformation:
 
 @dataclass(kw_only=True)
 class EventOutcomeDetailNote:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class EventOutcomeDetail:
+    __source__: str = field(compare=False)
+
     note: EventOutcomeDetailNote | None
     # extension: list[EventOutcomeExtension] = (default_factory=list)
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         note_elem = element.find(ns.premis.eventOutcomeDetailNote)
         return cls(
+            __source__=element.__source__,
             note=(
                 EventOutcomeDetailNote.from_xml_tree(note_elem)
                 if note_elem is not None
@@ -1019,17 +1119,20 @@ class EventOutcome(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class EventOutcomeInformation:
+    __source__: str = field(compare=False)
+
     outcome: EventOutcome | None
     outcome_detail: list[EventOutcomeDetail]
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         outcome_elem = element.find(ns.premis.eventOutcome)
         outcome_details = [
             EventOutcomeDetail.from_xml_tree(e)
             for e in element.findall(ns.premis.eventOutcomeDetail)
         ]
         return cls(
+            __source__=element.__source__,
             outcome=(
                 EventOutcome.from_xml_tree(outcome_elem)
                 if outcome_elem is not None
@@ -1046,13 +1149,15 @@ class LinkingAgentIdentifierType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class LinkingAgentIdentifierValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
@@ -1062,6 +1167,8 @@ class LinkingAgentRole(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class LinkingAgentIdentifier:
+    __source__: str = field(compare=False)
+
     type: LinkingAgentIdentifierType
     value: LinkingAgentIdentifierValue
     roles: list[LinkingAgentRole]
@@ -1070,18 +1177,19 @@ class LinkingAgentIdentifier:
     simple_link: str | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.linkingAgentIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing linkingAgentIdentifierType")
+            raise InvalidXMLError("Missing linkingAgentIdentifierType")
         value_elem = element.find(ns.premis.linkingAgentIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing linkingAgentIdentifierValue")
+            raise InvalidXMLError("Missing linkingAgentIdentifierValue")
         roles = [
             LinkingAgentRole.from_xml_tree(e)
             for e in element.findall(ns.premis.linkingAgentRole)
         ]
         return cls(
+            __source__=element.__source__,
             type=LinkingAgentIdentifierType.from_xml_tree(type_elem),
             value=LinkingAgentIdentifierValue.from_xml_tree(value_elem),
             roles=roles,
@@ -1096,13 +1204,15 @@ class LinkingObjectIdentifierType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class LinkingObjectIdentifierValue:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
@@ -1112,6 +1222,8 @@ class LinkingObjectRole(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class LinkingObjectIdentifier:
+    __source__: str = field(compare=False)
+
     type: LinkingObjectIdentifierType
     value: LinkingObjectIdentifierValue
     roles: list[LinkingObjectRole]
@@ -1119,18 +1231,19 @@ class LinkingObjectIdentifier:
     simple_link: str | None
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         type_elem = element.find(ns.premis.linkingObjectIdentifierType)
         if type_elem is None:
-            raise ValueError("Missing linkingObjectIdentifierType")
+            raise InvalidXMLError("Missing linkingObjectIdentifierType")
         value_elem = element.find(ns.premis.linkingObjectIdentifierValue)
         if value_elem is None:
-            raise ValueError("Missing linkingObjectIdentifierValue")
+            raise InvalidXMLError("Missing linkingObjectIdentifierValue")
         roles = [
             LinkingObjectRole.from_xml_tree(e)
             for e in element.findall(ns.premis.linkingObjectRole)
         ]
         return cls(
+            __source__=element.__source__,
             type=LinkingObjectIdentifierType.from_xml_tree(type_elem),
             value=LinkingObjectIdentifierValue.from_xml_tree(value_elem),
             roles=roles,
@@ -1145,17 +1258,21 @@ class EventType(StringPlusAuthority):
 
 @dataclass(kw_only=True)
 class EventDateTime:
+    __source__: str = field(compare=False)
+
     text: str
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         if element.text is None:
-            return cls(text="")
-        return cls(text=element.text)
+            return cls(__source__=element.__source__, text="")
+        return cls(__source__=element.__source__, text=element.text)
 
 
 @dataclass(kw_only=True)
 class Event:
+    __source__: str = field(compare=False)
+
     identifier: EventIdentifier
     type: EventType
     datetime: EventDateTime
@@ -1168,16 +1285,16 @@ class Event:
     # version: Literal["version3"]
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         identifier_elem = element.find(ns.premis.eventIdentifier)
         if identifier_elem is None:
-            raise ValueError("Missing eventIdentifier")
+            raise InvalidXMLError("Missing eventIdentifier")
         type_elem = element.find(ns.premis.eventType)
         if type_elem is None:
-            raise ValueError("Missing eventType")
+            raise InvalidXMLError("Missing eventType")
         datetime_elem = element.find(ns.premis.eventDateTime)
         if datetime_elem is None:
-            raise ValueError("Missing eventDateTime")
+            raise InvalidXMLError("Missing eventDateTime")
         detail_information = [
             EventDetailInformation.from_xml_tree(e)
             for e in element.findall(ns.premis.eventDetailInformation)
@@ -1195,6 +1312,7 @@ class Event:
             for e in element.findall(ns.premis.linkingObjectIdentifier)
         ]
         return cls(
+            __source__=element.__source__,
             identifier=EventIdentifier.from_xml_tree(identifier_elem),
             type=EventType.from_xml_tree(type_elem),
             datetime=EventDateTime.from_xml_tree(datetime_elem),
@@ -1210,6 +1328,8 @@ class Event:
 
 @dataclass(kw_only=True)
 class Premis:
+    __source__: str = field(compare=False)
+
     objects: list[Object]
     events: list[Event]
     agents: list[Agent]
@@ -1241,15 +1361,15 @@ class Premis:
         return [obj for obj in self.objects if isinstance(obj, File)]
 
     @classmethod
-    def from_xml(cls, path: Path | str) -> Self:
-        tree = parse_xml_tree(path)
-        return cls.from_xml_tree(tree.getroot())
+    def from_xml(cls, path: Path) -> Self:
+        root = parse_xml_tree(path)
+        return cls.from_xml_tree(root)
 
     @classmethod
-    def from_xml_tree(cls, element: Element) -> Self:
+    def from_xml_tree(cls, element: _Element) -> Self:
         version = element.get("version")
         if version != "3.0":
-            raise ValueError()
+            raise InvalidXMLError()
 
         events = [
             Event.from_xml_tree(evt) for evt in element if evt.tag == ns.premis.event
@@ -1261,6 +1381,7 @@ class Premis:
         ]
 
         return cls(
+            __source__=element.__source__,
             version=version,
             objects=cls._parse_objects(element),
             events=events,
@@ -1268,7 +1389,7 @@ class Premis:
         )
 
     @staticmethod
-    def _parse_objects(element: Element) -> list[Object]:
+    def _parse_objects(element: _Element) -> list[Object]:
         objects = [obj for obj in element if obj.tag == ns.premis.object]
 
         files = (
