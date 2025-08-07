@@ -66,7 +66,7 @@ class SIP[T: XMLParseable]:
     def from_path(cls, unzipped_path: Path, descriptive_cls: type[T]) -> Self:
         mets_path = next(unzipped_path.glob("METS.xml"))
         metadata_path = next(unzipped_path.glob("metadata"))
-        representations_paths = unzipped_path.glob("representations/representation_*")
+        representations_paths = unzipped_path.glob("representations/*")
 
         return cls(
             unzipped_path=unzipped_path,
