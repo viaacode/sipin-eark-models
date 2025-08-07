@@ -10,8 +10,10 @@ from .namespaces import xsi
 from .etree import _Element
 
 
-class InvalidXMLError(Exception):
-    pass
+class EarkModelsError(Exception): ...
+
+
+class InvalidXMLError(EarkModelsError): ...
 
 
 @dataclass

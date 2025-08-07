@@ -10,6 +10,8 @@
 from typing import Literal, TypedDict
 from xml.etree.ElementTree import Element
 
+from eark_models.utils import InvalidXMLError
+
 AnyURI = str
 
 
@@ -27,7 +29,7 @@ def parse_simple_link(root: Element) -> SimpleLink:
     # TODO: the attributes below could be using a prefix different from `xlink`
     type = root.attrib.get("xlink:type")
     if type is not None and type != "simple":
-        raise ValueError()
+        raise InvalidXMLError()
 
     show = root.attrib.get("xlink:show")
     if show is not None and show not in (
@@ -37,7 +39,7 @@ def parse_simple_link(root: Element) -> SimpleLink:
         "other",
         "none",
     ):
-        raise ValueError()
+        raise InvalidXMLError()
 
     actuate = root.attrib.get("xlink:actuate")
     if actuate is not None and actuate not in (
@@ -46,7 +48,7 @@ def parse_simple_link(root: Element) -> SimpleLink:
         "other",
         "none",
     ):
-        raise ValueError()
+        raise InvalidXMLError()
 
     return {
         "xlink_type": type,

@@ -102,7 +102,7 @@ class AltFormatAttributes(TypedDict):
 
 def parse_string_plus_language(element: Element) -> StringPlusLanguage:
     if element.text is None:
-        raise ValueError()
+        raise InvalidXMLError()
     return {
         "text": element.text,
         "lang": element.attrib.get("lang"),
@@ -134,7 +134,7 @@ def parse_string_plus_language_plus_supplied(
 ) -> StringPlusLanguagePlusSupplied:
     supplied = element.attrib.get("supplied")
     if supplied is not None and supplied != "yes":
-        raise ValueError()
+        raise InvalidXMLError()
     return {
         **parse_string_plus_language(element),
         "supplied": supplied,
@@ -193,7 +193,7 @@ class Date:
             "temper",
             "edtf",
         ):
-            raise ValueError()
+            raise InvalidXMLError()
 
         qualifier = element.attrib.get("qualifier")
         if qualifier is not None and qualifier not in (
@@ -201,15 +201,15 @@ class Date:
             "inferred",
             "questionable",
         ):
-            raise ValueError()
+            raise InvalidXMLError()
 
         point = element.attrib.get("point")
         if point is not None and point not in ("start", "end"):
-            raise ValueError()
+            raise InvalidXMLError()
 
         key_date = element.attrib.get("key_date")
         if key_date is not None and key_date != "yes":
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             **parse_string_plus_language(element),
@@ -289,7 +289,7 @@ class Abstract:
         if shareable is None:
             shareable = "no"
         if shareable != "no":
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             **parse_string_plus_language(root),
@@ -332,7 +332,7 @@ class Genre:
         usage = root.attrib.get("usage")
 
         if usage is not None and usage != "primary":
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             **parse_string_plus_language_plus_authority(root),
@@ -370,7 +370,7 @@ class Identifier:
     def from_xml_tree(cls, root: Element) -> Self:
         invalid = root.attrib.get("invalid")
         if invalid is not None and invalid != "yes":
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             **parse_string_plus_language(root),
@@ -415,11 +415,11 @@ class LanguageTerm:
             "rfc4646",
             "rfc5646",
         ):
-            raise ValueError()
+            raise InvalidXMLError()
 
         type = root.attrib.get("type")
         if type is not None and type not in ("code", "text"):
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             **parse_string_plus_language(root),
@@ -451,7 +451,7 @@ class ScriptTerm:
     def from_xml_tree(cls, root: Element) -> Self:
         type = root.attrib.get("type")
         if type is not None and type not in ("code", "text"):
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             **parse_string_plus_language_plus_authority(root),
@@ -479,7 +479,7 @@ class Language:
     def from_xml_tree(cls, root: Element) -> Self:
         usage = root.attrib.get("usage")
         if usage is not None and usage != "primary":
-            raise ValueError()
+            raise InvalidXMLError()
 
         lang_terms = root.iterfind(ns.mods.languageTerm)
         script_terms = root.iterfind(ns.mods.scriptTerm)
@@ -664,11 +664,11 @@ class PlaceTerm:
             "marccountry",
             "iso3166",
         ):
-            raise ValueError()
+            raise InvalidXMLError()
 
         type = root.attrib.get("type")
         if type not in ("code", "text"):
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             **parse_string_plus_language(root),
@@ -688,7 +688,7 @@ class Place:
     def from_xml_tree(cls, root: Element) -> Self:
         supplied = root.attrib.get("supplied")
         if supplied is not None and supplied != "yes":
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             terms=[PlaceTerm.from_xml_tree(el) for el in root],
@@ -807,7 +807,7 @@ class Issuance:
             "serial",
             "integrating resource",
         ):
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             value=text,
@@ -1179,7 +1179,7 @@ class RelatedItem:
             "references",
             "reviewOf",
         ):
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             properties=[Mods._parse_mods_property(el) for el in root],
@@ -1342,7 +1342,7 @@ class Subject:
     def from_xml_tree(cls, root: Element) -> Self:
         usage = root.attrib.get("usage")
         if usage is not None and usage != "primary":
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             properties=[Subject._parse_subject_property(el) for el in root],
@@ -1629,15 +1629,15 @@ class TypeOfResource:
     def from_xml_tree(cls, root: Element) -> Self:
         collection = root.attrib.get("collection")
         if collection is not None and collection != "yes":
-            raise ValueError()
+            raise InvalidXMLError()
 
         manuscript = root.attrib.get("manuscript")
         if manuscript is not None and manuscript != "yes":
-            raise ValueError()
+            raise InvalidXMLError()
 
         usage = root.attrib.get("usage")
         if usage is not None and usage != "primary":
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             **parse_string_plus_language_plus_authority(root),
@@ -1791,15 +1791,15 @@ class TitleInfo:
             "alternative",
             "uniform",
         ):
-            raise ValueError()
+            raise InvalidXMLError()
 
         supplied = root.attrib.get("supplied")
         if supplied is not None and supplied != "yes":
-            raise ValueError()
+            raise InvalidXMLError()
 
         usage = root.attrib.get("usage")
         if usage is not None and usage != "primary":
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             properties=[cls._parse_title_info_property(el) for el in root],
@@ -1970,7 +1970,7 @@ class Mods:
             "3.1",
             "3.0",
         ):
-            raise ValueError()
+            raise InvalidXMLError()
 
         return cls(
             properties=properties,

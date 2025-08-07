@@ -6,7 +6,7 @@ from pydantic.dataclasses import dataclass
 
 from ..etree import _Element
 from ..namespaces import schema, dcterms, xsi
-from ..utils import InvalidXMLError, XMLParseable, parse_xml_tree
+from ..utils import EarkModelsError, InvalidXMLError, XMLParseable, parse_xml_tree
 
 from ..langstring import LangString, langstrings
 
@@ -273,7 +273,7 @@ def parse_is_part_of(root: _Element) -> AnyCreativeWork | BroadcastEvent:
         case schema.BroadcastEvent:
             return BroadcastEvent.from_xml_tree(root)
         case _:
-            raise AssertionError("CreativeWorkType or EventTypes are not complete")
+            raise EarkModelsError("CreativeWorkType or EventTypes are not complete")
 
 
 xsd_duration = str
