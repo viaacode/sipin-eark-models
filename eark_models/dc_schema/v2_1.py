@@ -6,9 +6,9 @@ from pydantic.dataclasses import dataclass
 
 from ..etree import _Element
 from ..namespaces import schema, dcterms, xsi
-from ..utils import InvalidXMLError, XMLParseable, parse_xml_tree
+from ..utils import EarkModelsError, InvalidXMLError, XMLParseable, parse_xml_tree
 
-from ..langstring import LangString, langstrings
+from ..langstring import LangStrings, langstrings, UniqueLang, unique_lang
 
 
 @dataclass
@@ -43,7 +43,7 @@ class _Role:
     __source__: str
 
     role_name: str | None
-    name: list[LangString]
+    name: UniqueLang
     birth_date: EDTF | None
     death_date: EDTF | None
 
@@ -52,16 +52,14 @@ class _Role:
         role_name = element.get(schema.roleName)
         birth_date = element.find(schema.birthDate)
         death_date = element.find(schema.deathDate)
+        birth_date = EDTF.from_xml_tree(birth_date) if birth_date is not None else None
+        death_date = EDTF.from_xml_tree(death_date) if death_date is not None else None
         return cls(
             __source__=element.__source__,
-            name=langstrings(element, schema.name),
+            name=unique_lang(element, schema.name),
             role_name=role_name,
-            birth_date=EDTF.from_xml_tree(birth_date)
-            if birth_date is not None
-            else None,
-            death_date=EDTF.from_xml_tree(death_date)
-            if death_date is not None
-            else None,
+            birth_date=birth_date,
+            death_date=death_date,
         )
 
 
@@ -142,7 +140,7 @@ EventTypes = Literal[schema.BroadcastEvent]
 class Episode:
     __source__: str
     xsi_type: Literal["{https://schema.org/}Episode"]
-    name: list[LangString]
+    name: UniqueLang
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
@@ -152,7 +150,7 @@ class Episode:
         return cls(
             __source__=element.__source__,
             xsi_type=xsi_type,
-            name=langstrings(element, schema.name),
+            name=unique_lang(element, schema.name),
         )
 
 
@@ -160,7 +158,7 @@ class Episode:
 class ArchiveComponent:
     __source__: str
     xsi_type: Literal["{https://schema.org/}ArchiveComponent"]
-    name: list[LangString]
+    name: UniqueLang
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
@@ -170,20 +168,20 @@ class ArchiveComponent:
         return cls(
             __source__=element.__source__,
             xsi_type=xsi_type,
-            name=langstrings(element, schema.name),
+            name=unique_lang(element, schema.name),
         )
 
 
 @dataclass
 class HasPart:
     __source__: str
-    name: list[LangString]
+    name: UniqueLang
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
         return cls(
             __source__=element.__source__,
-            name=langstrings(element, schema.name),
+            name=unique_lang(element, schema.name),
         )
 
 
@@ -191,7 +189,7 @@ class HasPart:
 class CreativeWorkSeries:
     __source__: str
     xsi_type: Literal["{https://schema.org/}CreativeWorkSeries"]
-    name: list[LangString]
+    name: UniqueLang
     position: int | None
     has_part: list[HasPart]
 
@@ -204,7 +202,7 @@ class CreativeWorkSeries:
         return cls(
             __source__=element.__source__,
             xsi_type=xsi_type,
-            name=langstrings(element, schema.name),
+            name=unique_lang(element, schema.name),
             position=int(position) if position else None,
             has_part=[
                 HasPart.from_xml_tree(el) for el in element.findall(schema.hasPart)
@@ -216,7 +214,7 @@ class CreativeWorkSeries:
 class CreativeWorkSeason:
     __source__: str
     xsi_type: Literal["{https://schema.org/}CreativeWorkSeason"]
-    name: list[LangString]
+    name: UniqueLang
     season_number: int | None
 
     @classmethod
@@ -228,7 +226,7 @@ class CreativeWorkSeason:
         return cls(
             __source__=element.__source__,
             xsi_type=xsi_type,
-            name=langstrings(element, schema.name),
+            name=unique_lang(element, schema.name),
             season_number=int(season_number) if season_number else None,
         )
 
@@ -237,7 +235,7 @@ class CreativeWorkSeason:
 class BroadcastEvent:
     __source__: str
     xsi_type: Literal["{https://schema.org/}BroadcastEvent"]
-    name: list[LangString]
+    name: UniqueLang
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
@@ -247,7 +245,7 @@ class BroadcastEvent:
         return cls(
             __source__=element.__source__,
             xsi_type=xsi_type,
-            name=langstrings(element, schema.name),
+            name=unique_lang(element, schema.name),
         )
 
 
@@ -273,7 +271,7 @@ def parse_is_part_of(root: _Element) -> AnyCreativeWork | BroadcastEvent:
         case schema.BroadcastEvent:
             return BroadcastEvent.from_xml_tree(root)
         case _:
-            raise AssertionError("CreativeWorkType or EventTypes are not complete")
+            raise EarkModelsError("CreativeWorkType or EventTypes are not complete")
 
 
 xsd_duration = str
@@ -285,35 +283,35 @@ class DCPlusSchema(XMLParseable):
     __source__: str
 
     identifier: str
-    title: list[LangString]
-    alternative: list[LangString]
+    title: UniqueLang
+    alternative: LangStrings
     extent: xsd_duration | None
     available: xsd_timedelta | None
-    description: list[LangString]
-    abstract: list[LangString]
+    description: UniqueLang
+    abstract: UniqueLang
     created: EDTF
     issued: EDTF | None
     publisher: list[Publisher]
     creator: list[Creator]
     contributor: list[Contributor]
     spatial: list[str]
-    temporal: list[LangString]
-    subject: list[LangString]
+    temporal: LangStrings
+    subject: LangStrings
     language: list[str]
     license: list[str]
-    rights_holder: list[LangString]
-    rights: list[LangString]
+    rights_holder: UniqueLang
+    rights: UniqueLang
     type: str
     format: str
     height: Height | None
     width: Width | None
     depth: Depth | None
     weight: Weight | None
-    art_medium: list[LangString]
-    artform: list[LangString]
+    art_medium: LangStrings
+    artform: LangStrings
     is_part_of: list[AnyCreativeWork | BroadcastEvent]
-    credit_text: list[LangString]
-    genre: list[LangString]
+    credit_text: LangStrings
+    genre: UniqueLang
 
     @classmethod
     def from_xml(cls, path: Path) -> Self:
@@ -344,12 +342,12 @@ class DCPlusSchema(XMLParseable):
         return cls(
             __source__=element.__source__,
             identifier=get_text(element, dcterms.identifier),
-            title=langstrings(element, dcterms.title),
+            title=unique_lang(element, dcterms.title),
             alternative=langstrings(element, dcterms.alternative),
             extent=element.findtext(dcterms.extent),
             available=element.findtext(dcterms.available),
-            description=langstrings(element, dcterms.description),
-            abstract=langstrings(element, dcterms.abstract),
+            description=unique_lang(element, dcterms.description),
+            abstract=unique_lang(element, dcterms.abstract),
             created=EDTF.from_xml_tree(created),
             issued=EDTF.from_xml_tree(issued) if issued is not None else None,
             spatial=get_text_list(element, dcterms.spatial),
@@ -357,8 +355,8 @@ class DCPlusSchema(XMLParseable):
             subject=langstrings(element, dcterms.subject),
             language=get_text_list(element, dcterms.language),
             license=get_text_list(element, dcterms.license),
-            rights_holder=langstrings(element, dcterms.rightsHolder),
-            rights=langstrings(element, dcterms.rights),
+            rights_holder=unique_lang(element, dcterms.rightsHolder),
+            rights=unique_lang(element, dcterms.rights),
             type=get_text(element, dcterms.type),
             format=get_text(element, dcterms.format),
             creator=[Creator.from_xml_tree(el) for el in creators],
@@ -372,7 +370,7 @@ class DCPlusSchema(XMLParseable):
             artform=langstrings(element, schema.artform),
             is_part_of=is_part_of,
             credit_text=langstrings(element, schema.creditText),
-            genre=langstrings(element, schema.genre),
+            genre=unique_lang(element, schema.genre),
         )
 
 

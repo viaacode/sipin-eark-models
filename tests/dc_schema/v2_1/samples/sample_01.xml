@@ -18,21 +18,23 @@
 
 
   <dcterms:publisher>
-    <schema:name xml:lang="en">publisher 1</schema:name>
+    <schema:name xml:lang="nl">publisher 1</schema:name>
     <schema:birthDate xsi:type="edtf:EDTF-level0">2027</schema:birthDate>
   </dcterms:publisher>
 
   <dcterms:publisher>
+    <schema:name xml:lang="nl">publisher 2</schema:name>
     <schema:name xml:lang="en">publisher 2</schema:name>
     <schema:deathDate xsi:type="edtf:EDTF-level1">2028</schema:deathDate>
   </dcterms:publisher>
 
   <dcterms:creator>
-    <schema:name xml:lang="en">creator 1</schema:name>
+    <schema:name xml:lang="nl">creator 1</schema:name>
   </dcterms:creator>
 
   <dcterms:contributor>
-    <schema:name xml:lang="en">contributor 1</schema:name>
+    <schema:name xml:lang="nl">contributor 1</schema:name>
+    <schema:name xml:lang="fr">contributor 1</schema:name>
   </dcterms:contributor>
 
   <dcterms:spatial>spatial info 1</dcterms:spatial>
@@ -110,6 +112,7 @@
   <schema:artform xml:lang="en">art form 3</schema:artform>
 
   <schema:isPartOf xsi:type="schema:Episode">
+    <schema:name xml:lang="nl">Een episode</schema:name>
     <schema:name xml:lang="fr">Un episode</schema:name>
     <schema:name xml:lang="en">An episode</schema:name>
   </schema:isPartOf>
@@ -123,6 +126,7 @@
   </schema:isPartOf>
 
   <schema:isPartOf xsi:type="schema:CreativeWorkSeries">
+    <schema:name xml:lang="nl">Een series</schema:name>
     <schema:name xml:lang="en">A series</schema:name>
     <schema:position>1</schema:position>
     <schema:hasPart>
@@ -132,7 +136,7 @@
   </schema:isPartOf>
 
   <schema:isPartOf xsi:type="schema:CreativeWorkSeason">
-    <schema:name xml:lang="en">A series</schema:name>
+    <schema:name xml:lang="nl">Een series</schema:name>
     <schema:seasonNumber>2</schema:seasonNumber>
   </schema:isPartOf>
 
