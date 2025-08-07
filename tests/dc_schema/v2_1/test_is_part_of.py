@@ -4,12 +4,12 @@ import pytest
 
 from eark_models.utils import parse_xml_tree, InvalidXMLError
 import eark_models.dc_schema.v2_1 as dc_schema
-from eark_models.langstring import LangString
+from eark_models.langstring import _LangString, UniqueLang
 
 
 def test_parsing_with_default_namespace():
     content = r"""<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/" xsi:type="schema:Episode">
-        <schema:name xml:lang="en">SIP.py, the SIP model</schema:name></schema:isPartOf>"""
+        <schema:name xml:lang="nl">SIP.py, het SIP model</schema:name></schema:isPartOf>"""
 
     file = StringIO(content)
     root = parse_xml_tree(file)
@@ -19,7 +19,7 @@ def test_parsing_with_default_namespace():
 def test_episode():
     content = """<schema:isPartOf  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/"
       xsi:type="schema:Episode">
-      <schema:name xml:lang="en">SIP.py, the SIP model</schema:name>
+      <schema:name xml:lang="nl">SIP.py, het SIP model</schema:name>
     </schema:isPartOf>
     """
 
@@ -30,16 +30,18 @@ def test_episode():
     assert episode == dc_schema.Episode(
         __source__="",
         xsi_type="{https://schema.org/}Episode",
-        name=[
-            LangString(lang="en", value="SIP.py, the SIP model"),
-        ],
+        name=UniqueLang(
+            [
+                _LangString(lang="nl", value="SIP.py, het SIP model"),
+            ]
+        ),
     )
 
 
 def test_broadcast_event():
     content = """<myschema:isPartOf  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:myschema="https://schema.org/"
       xsi:type="myschema:BroadcastEvent">
-      <myschema:name xml:lang="fr">Eventfully</myschema:name>
+      <myschema:name xml:lang="nl">Eventfully</myschema:name>
     </myschema:isPartOf>
     """
 
@@ -50,16 +52,18 @@ def test_broadcast_event():
     assert event == dc_schema.BroadcastEvent(
         __source__="",
         xsi_type="{https://schema.org/}BroadcastEvent",
-        name=[
-            LangString(lang="fr", value="Eventfully"),
-        ],
+        name=UniqueLang(
+            [
+                _LangString(lang="nl", value="Eventfully"),
+            ]
+        ),
     )
 
 
 def test_parsing_with_non_default_namespace():
     content = """<myschema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:myschema="https://schema.org/"
       xsi:type="myschema:BroadcastEvent">
-      <myschema:name xml:lang="fr">Eventfully</myschema:name>
+      <myschema:name xml:lang="nl">Eventfully</myschema:name>
     </myschema:isPartOf>
     """
 
@@ -70,7 +74,7 @@ def test_parsing_with_non_default_namespace():
 
 def test_parsing_without_xsi_type():
     content = """<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/">
-      <schema:name xml:lang="en">SIP.py, the SIP model</schema:name>
+      <schema:name xml:lang="nl">SIP.py, the SIP model</schema:name>
     </schema:isPartOf>
     """
 
@@ -84,7 +88,7 @@ def test_parsing_without_xsi_type():
 def test_parsing_with_empty_xsi_type():
     content = """<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/"
         xsi:type="">
-      <schema:name xml:lang="en">SIP.py, the SIP model</schema:name>
+      <schema:name xml:lang="nl">SIP.py, the SIP model</schema:name>
     </schema:isPartOf>
     """
 
@@ -98,7 +102,7 @@ def test_parsing_with_empty_xsi_type():
 def test_has_parts_inside_is_part_of():
     content = """<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/"
         xsi:type="schema:CreativeWorkSeries">
-      <schema:name xml:lang="en">my creative work series</schema:name>
+      <schema:name xml:lang="nl">my creative work series</schema:name>
       <schema:hasPart>
           <schema:name xml:lang="nl">has part</schema:name>
       </schema:hasPart>
