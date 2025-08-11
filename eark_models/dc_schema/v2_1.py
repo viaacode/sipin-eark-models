@@ -300,7 +300,7 @@ class DCPlusSchema(XMLParseable):
     language: list[str]
     license: list[str]
     rights_holder: UniqueLang
-    rights: UniqueLang
+    rights: LangStrings
     type: str
     format: str
     height: Height | None
@@ -356,7 +356,7 @@ class DCPlusSchema(XMLParseable):
             language=get_text_list(element, dcterms.language),
             license=get_text_list(element, dcterms.license),
             rights_holder=unique_lang(element, dcterms.rightsHolder),
-            rights=unique_lang(element, dcterms.rights),
+            rights=langstrings(element, dcterms.rights),
             type=get_text(element, dcterms.type),
             format=get_text(element, dcterms.format),
             creator=[Creator.from_xml_tree(el) for el in creators],
