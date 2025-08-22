@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<myschema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:myschema="https://schema.org/" xsi:type="myschema:BroadcastEvent">
+  <myschema:name xml:lang="nl">Eventfully</myschema:name>
+</myschema:isPartOf>

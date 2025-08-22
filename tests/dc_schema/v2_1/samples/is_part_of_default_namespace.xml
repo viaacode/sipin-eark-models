@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/" xsi:type="schema:Episode">
+  <schema:name xml:lang="nl">SIP.py, het SIP model</schema:name>
+</schema:isPartOf>

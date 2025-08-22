@@ -40,16 +40,11 @@ def expand_qname_attributes(
     return element
 
 
-def parse_xml_tree(source: str | Path | TextIO) -> "_Element":
+def parse_xml_tree(source: str | Path) -> "_Element":
     document_namespaces = get_document_namespaces(source)
-    if not isinstance(source, (str, Path)):
-        source.seek(0)
     tree = ET.parse(source)
     expand_qname_attributes(tree.getroot(), document_namespaces)
-    if isinstance(source, (str, Path)):
-        return _Element(tree.getroot(), source=str(source))
-    else:
-        return _Element(tree.getroot(), source="")
+    return _Element(tree.getroot(), source=str(source))
 
 
 def expand_qname(name: str, document_namespaces: dict[str, str]) -> str:
