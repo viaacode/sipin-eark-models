@@ -2,6 +2,7 @@ import typing
 from typing import Self, Literal
 from pathlib import Path
 
+from dataclasses import field
 from pydantic.dataclasses import dataclass
 
 from ..etree import _Element
@@ -13,7 +14,7 @@ from ..langstring import LangStrings, langstrings, UniqueLang, unique_lang
 
 @dataclass
 class EDTF:
-    __source__: str
+    __source__: str = field(compare=False)
     xsi_type: Literal[
         "{http://id.loc.gov/datatypes/edtf/}EDTF-level0",
         "{http://id.loc.gov/datatypes/edtf/}EDTF-level1",
@@ -40,7 +41,7 @@ class EDTF:
 
 @dataclass
 class _Role:
-    __source__: str
+    __source__: str = field(compare=False)
 
     role_name: str | None
     name: UniqueLang
@@ -81,7 +82,7 @@ UnitText = Literal["mm", "cm", "m", "kg"]
 
 @dataclass
 class _Measurement:
-    __source__: str
+    __source__: str = field(compare=False)
 
     value: str
     unit_code: UnitCode | None
@@ -138,7 +139,7 @@ EventTypes = Literal[schema.BroadcastEvent]
 
 @dataclass
 class Episode:
-    __source__: str
+    __source__: str = field(compare=False)
     xsi_type: Literal["{https://schema.org/}Episode"]
     name: UniqueLang
 
@@ -155,10 +156,30 @@ class Episode:
 
 
 @dataclass
-class ArchiveComponent:
-    __source__: str
+class HasPartArchiveComponent:
+    __source__: str = field(compare=False)
     xsi_type: Literal["{https://schema.org/}ArchiveComponent"]
     name: UniqueLang
+
+    @classmethod
+    def from_xml_tree(cls, element: _Element) -> Self:
+        xsi_type = element.get(xsi.type)
+        if xsi_type != "{https://schema.org/}ArchiveComponent":
+            raise InvalidXMLError()
+
+        return cls(
+            __source__=element.__source__,
+            xsi_type=xsi_type,
+            name=unique_lang(element, schema.name),
+        )
+
+
+@dataclass
+class ArchiveComponent:
+    __source__: str = field(compare=False)
+    xsi_type: Literal["{https://schema.org/}ArchiveComponent"]
+    name: UniqueLang
+    has_part: list[HasPartArchiveComponent]
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
@@ -169,29 +190,39 @@ class ArchiveComponent:
             __source__=element.__source__,
             xsi_type=xsi_type,
             name=unique_lang(element, schema.name),
+            has_part=[
+                HasPartArchiveComponent.from_xml_tree(el)
+                for el in element.findall(schema.hasPart)
+            ],
         )
 
 
 @dataclass
-class HasPart:
-    __source__: str
+class HasPartCreativeWorkSeries:
+    __source__: str = field(compare=False)
+    xsi_type: Literal["{https://schema.org/}CreativeWorkSeries"]
     name: UniqueLang
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
+        xsi_type = element.get(xsi.type)
+        if xsi_type != "{https://schema.org/}CreativeWorkSeries":
+            raise InvalidXMLError()
+
         return cls(
             __source__=element.__source__,
+            xsi_type=xsi_type,
             name=unique_lang(element, schema.name),
         )
 
 
 @dataclass
 class CreativeWorkSeries:
-    __source__: str
+    __source__: str = field(compare=False)
     xsi_type: Literal["{https://schema.org/}CreativeWorkSeries"]
     name: UniqueLang
     position: int | None
-    has_part: list[HasPart]
+    has_part: list[HasPartCreativeWorkSeries]
 
     @classmethod
     def from_xml_tree(cls, element: _Element) -> Self:
@@ -205,14 +236,15 @@ class CreativeWorkSeries:
             name=unique_lang(element, schema.name),
             position=int(position) if position else None,
             has_part=[
-                HasPart.from_xml_tree(el) for el in element.findall(schema.hasPart)
+                HasPartCreativeWorkSeries.from_xml_tree(el)
+                for el in element.findall(schema.hasPart)
             ],
         )
 
 
 @dataclass
 class CreativeWorkSeason:
-    __source__: str
+    __source__: str = field(compare=False)
     xsi_type: Literal["{https://schema.org/}CreativeWorkSeason"]
     name: UniqueLang
     season_number: int | None
@@ -233,7 +265,7 @@ class CreativeWorkSeason:
 
 @dataclass
 class BroadcastEvent:
-    __source__: str
+    __source__: str = field(compare=False)
     xsi_type: Literal["{https://schema.org/}BroadcastEvent"]
     name: UniqueLang
 
@@ -280,7 +312,7 @@ xsd_timedelta = str
 
 @dataclass
 class DCPlusSchema(XMLParseable):
-    __source__: str
+    __source__: str = field(compare=False)
 
     identifier: str
     title: UniqueLang

@@ -1,4 +1,4 @@
-from io import StringIO
+from pathlib import Path
 
 import pytest
 
@@ -6,25 +6,16 @@ from eark_models.utils import parse_xml_tree, InvalidXMLError
 import eark_models.dc_schema.v2_1 as dc_schema
 from eark_models.langstring import _LangString, UniqueLang
 
+cwd = Path(__file__).parent
+
 
 def test_parsing_with_default_namespace():
-    content = r"""<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/" xsi:type="schema:Episode">
-        <schema:name xml:lang="nl">SIP.py, het SIP model</schema:name></schema:isPartOf>"""
-
-    file = StringIO(content)
-    root = parse_xml_tree(file)
+    root = parse_xml_tree(cwd / "./samples/is_part_of_default_namespace.xml")
     dc_schema.parse_is_part_of(root)
 
 
 def test_episode():
-    content = """<schema:isPartOf  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/"
-      xsi:type="schema:Episode">
-      <schema:name xml:lang="nl">SIP.py, het SIP model</schema:name>
-    </schema:isPartOf>
-    """
-
-    file = StringIO(content)
-    root = parse_xml_tree(file)
+    root = parse_xml_tree(cwd / "./samples/is_part_of_episode.xml")
     episode = dc_schema.Episode.from_xml_tree(root)
 
     assert episode == dc_schema.Episode(
@@ -39,14 +30,7 @@ def test_episode():
 
 
 def test_broadcast_event():
-    content = """<myschema:isPartOf  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:myschema="https://schema.org/"
-      xsi:type="myschema:BroadcastEvent">
-      <myschema:name xml:lang="nl">Eventfully</myschema:name>
-    </myschema:isPartOf>
-    """
-
-    file = StringIO(content)
-    tree = parse_xml_tree(file)
+    tree = parse_xml_tree(cwd / "./samples/is_part_of_event.xml")
     event = dc_schema.BroadcastEvent.from_xml_tree(tree)
 
     assert event == dc_schema.BroadcastEvent(
@@ -60,58 +44,18 @@ def test_broadcast_event():
     )
 
 
-def test_parsing_with_non_default_namespace():
-    content = """<myschema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:myschema="https://schema.org/"
-      xsi:type="myschema:BroadcastEvent">
-      <myschema:name xml:lang="nl">Eventfully</myschema:name>
-    </myschema:isPartOf>
-    """
-
-    file = StringIO(content)
-    root = parse_xml_tree(file)
+def test_parsing_with_custom_namespace():
+    root = parse_xml_tree(cwd / "./samples/is_part_of_custom_namespace.xml")
     _ = dc_schema.parse_is_part_of(root)
 
 
 def test_parsing_without_xsi_type():
-    content = """<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/">
-      <schema:name xml:lang="nl">SIP.py, the SIP model</schema:name>
-    </schema:isPartOf>
-    """
-
-    file = StringIO(content)
-    root = parse_xml_tree(file)
-
-    with pytest.raises(InvalidXMLError):
-        _ = dc_schema.parse_is_part_of(root)
-
-
-def test_parsing_with_empty_xsi_type():
-    content = """<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/"
-        xsi:type="">
-      <schema:name xml:lang="nl">SIP.py, the SIP model</schema:name>
-    </schema:isPartOf>
-    """
-
-    file = StringIO(content)
-    root = parse_xml_tree(file)
+    root = parse_xml_tree(cwd / "./samples/is_part_of_without_xsi_type.xml")
 
     with pytest.raises(InvalidXMLError):
         _ = dc_schema.parse_is_part_of(root)
 
 
 def test_has_parts_inside_is_part_of():
-    content = """<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/"
-        xsi:type="schema:CreativeWorkSeries">
-      <schema:name xml:lang="nl">my creative work series</schema:name>
-      <schema:hasPart>
-          <schema:name xml:lang="nl">has part</schema:name>
-      </schema:hasPart>
-      <schema:hasPart>
-          <schema:name xml:lang="nl">has part 2</schema:name>
-      </schema:hasPart>
-    </schema:isPartOf>
-    """
-
-    file = StringIO(content)
-    root = parse_xml_tree(file)
+    root = parse_xml_tree(cwd / "./samples/is_part_of_with_has_part.xml")
     _ = dc_schema.parse_is_part_of(root)

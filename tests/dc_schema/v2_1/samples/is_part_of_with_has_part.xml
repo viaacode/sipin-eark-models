@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<schema:isPartOf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schema="https://schema.org/" xsi:type="schema:CreativeWorkSeries">
+  <schema:name xml:lang="nl">my creative work series</schema:name>
+  <schema:hasPart xsi:type="schema:CreativeWorkSeries">
+    <schema:name xml:lang="nl">has part</schema:name>
+  </schema:hasPart>
+  <schema:hasPart xsi:type="schema:CreativeWorkSeries">
+    <schema:name xml:lang="nl">has part 2</schema:name>
+  </schema:hasPart>
+</schema:isPartOf>

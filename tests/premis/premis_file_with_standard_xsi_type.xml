@@ -1,0 +1,16 @@
+       <premis:premis version="3.0"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xmlns:premis="http://www.loc.gov/premis/v3">
+            <premis:object xsi:type="premis:file">
+                <premis:objectIdentifier>
+                    <premis:objectIdentifierType>UUID</premis:objectIdentifierType>
+                    <premis:objectIdentifierValue>uuid-0001</premis:objectIdentifierValue>
+                </premis:objectIdentifier>
+                <premis:objectCharacteristics>
+                    <premis:format>
+                        <premis:formatName>CSIP</premis:formatName>
+                        <premis:formatVersion>1.0</premis:formatVersion>
+                    </premis:format>
+                </premis:objectCharacteristics>
+            </premis:object>
+        </premis:premis>
