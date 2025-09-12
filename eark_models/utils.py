@@ -53,8 +53,15 @@ def expand_qname(name: str, document_namespaces: dict[str, str]) -> str:
     E.g. "schema:Episode" is expanded to "{https://schema.org/}Episode"
     """
 
-    if ":" not in name:
+    has_default_ns = "" in document_namespaces
+    has_prefix = ":" in name
+
+    if not has_prefix and not has_default_ns:
         return name
+
+    if not has_prefix and has_default_ns:
+        default_ns = document_namespaces[""]
+        return "{" + default_ns + "}" + name
 
     splitted_qname = name.split(":", 1)
     prefix = splitted_qname[0]
