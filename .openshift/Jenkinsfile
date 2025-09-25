@@ -60,8 +60,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
-                        // The version in pyproject.toml is set to the version derived from the tag `vX.Y.Z`
-                        sh "sed -i 's/^version = .*/version = \"$PACKAGE_VERSION\"/' pyproject.toml"
                         sh "python -m build"
                     }
                 }
