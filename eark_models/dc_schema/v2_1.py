@@ -1,5 +1,6 @@
 import typing
-from typing import Self, Literal
+from typing import Literal
+from typing_extensions import Self
 from pathlib import Path
 
 from dataclasses import field

@@ -1,5 +1,6 @@
 from abc import ABC
-from typing import cast, TextIO, Self
+from typing import cast, TextIO
+from typing_extensions import Self
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
