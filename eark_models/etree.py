@@ -1,5 +1,7 @@
-from typing import Generator
+from typing import Generator, TypeVar
 import xml.etree.ElementTree as ET
+
+_T = TypeVar("_T")
 
 
 class _Element:
@@ -42,7 +44,7 @@ class _Element:
     def attrib(self) -> dict[str, str]:
         return self.element.attrib
 
-    def get[_T](self, key: str, default: _T = None) -> str | _T:
+    def get(self, key: str, default: _T = None) -> str | _T:
         return self.element.get(key, default)
 
     def __iter__(self) -> "Generator[_Element, None, None]":

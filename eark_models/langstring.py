@@ -1,4 +1,5 @@
-from typing import Self, Callable, NewType
+from typing import Callable, NewType, TypeVar
+from typing_extensions import Self
 
 from pydantic.dataclasses import dataclass
 
@@ -46,7 +47,11 @@ def langstrings(element: _Element, path: str) -> LangStrings:
     return LangStrings(lang_strings)
 
 
-def duplicate_by_key[T, K](input: list[T], key_func: Callable[[T], K]) -> list[T]:
+T = TypeVar("T")
+K = TypeVar("K")
+
+
+def duplicate_by_key(input: list[T], key_func: Callable[[T], K]) -> list[T]:
     seen = set[K]()
     result = []
     for item in input:
@@ -58,7 +63,7 @@ def duplicate_by_key[T, K](input: list[T], key_func: Callable[[T], K]) -> list[T
     return result
 
 
-def unique_by_key[T, K](input: list[T], key_func: Callable[[T], K]) -> list[T]:
+def unique_by_key(input: list[T], key_func: Callable[[T], K]) -> list[T]:
     seen = set[K]()
     result = []
     for item in input:

@@ -9,7 +9,8 @@
 #                   Metadata Object Description Schema.
 #                  See http://www.loc.gov/standards/mods/
 
-from typing import Literal, Any, Self, cast, TypedDict, Generator
+from typing import Literal, Any, cast, Generator
+from typing_extensions import Self, TypedDict
 from pathlib import Path
 from enum import Enum
 from pydantic.dataclasses import dataclass
