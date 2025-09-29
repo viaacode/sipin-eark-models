@@ -40,6 +40,25 @@ class EDTF:
         )
 
 
+# Actor does not exist in the SIP spec.
+# I don't think is is a good place to map "cast rol" and "cast name" to.
+# We should think this over.
+@dataclass
+class Actor:
+    __source__: str = field(compare=False)
+
+    character_name: str | None
+    name: UniqueLang
+
+    @classmethod
+    def from_xml_tree(cls, element: _Element) -> Self:
+        return cls(
+            __source__=element.__source__,
+            name=unique_lang(element, schema.name),
+            character_name=element.attrib.get(schema.characterName),
+        )
+
+
 @dataclass
 class _Role:
     __source__: str = field(compare=False)
@@ -327,6 +346,8 @@ class DCPlusSchema(XMLParseable):
     publisher: list[Publisher]
     creator: list[Creator]
     contributor: list[Contributor]
+    # Actor does not exist in the SIP spec. It is added here to have a suitable mapping to ebucore:hasCastMember, but this should be though over.
+    actors: list[Actor]
     spatial: list[str]
     temporal: LangStrings
     subject: LangStrings
@@ -359,6 +380,8 @@ class DCPlusSchema(XMLParseable):
         publishers += element.findall(dcterms.publisher)
         contributors = element.findall(schema.contributor)
         contributors += element.findall(dcterms.contributor)
+
+        actors = element.findall(schema.creator)
 
         is_part_of = [parse_is_part_of(el) for el in element.findall(schema.isPartOf)]
 
@@ -395,6 +418,7 @@ class DCPlusSchema(XMLParseable):
             creator=[Creator.from_xml_tree(el) for el in creators],
             publisher=[Publisher.from_xml_tree(el) for el in publishers],
             contributor=[Contributor.from_xml_tree(el) for el in contributors],
+            actors=[Actor.from_xml_tree(el) for el in actors],
             height=Height.from_xml_tree(height) if height else None,
             width=Width.from_xml_tree(width) if width else None,
             depth=Depth.from_xml_tree(depth) if depth else None,
