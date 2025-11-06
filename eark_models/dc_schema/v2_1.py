@@ -365,7 +365,7 @@ class DCPlusSchema(XMLParseable):
     artform: LangStrings
     is_part_of: list[AnyCreativeWork | BroadcastEvent]
     credit_text: LangStrings
-    genre: UniqueLang
+    genre: LangStrings
 
     @classmethod
     def from_xml(cls, path: Path) -> Self:
@@ -427,7 +427,7 @@ class DCPlusSchema(XMLParseable):
             artform=langstrings(element, schema.artform),
             is_part_of=is_part_of,
             credit_text=langstrings(element, schema.creditText),
-            genre=unique_lang(element, schema.genre),
+            genre=langstrings(element, schema.genre),
         )
 
 
